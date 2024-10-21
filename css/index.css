@@ -1,0 +1,601 @@
+@font-face {
+    font-family: "H-M";
+    src: url("../fonts/HarmonyOS_SansSC_Medium.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "H-B";
+    src: url("../fonts/HarmonyOS_SansSC_Bold.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "M-B";
+    src: url("../fonts/manrope-extrabold-3.woff") format("woff");
+}
+
+@font-face {
+    font-family: "P-B";
+    src: url("../fonts/Pixel_Experience-Bold.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "iconfont";
+    src: url("../fonts/font_1010028_f3us4eopbul.woff") format("woff")
+}
+
+@keyframes fade {
+    0% {
+        opacity: 1;
+    }
+
+    30% {
+        opacity: 0.1;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background-color: transparent;
+}
+
+html,
+body {
+    position: relative;
+    background-color: #242424;
+    font-family: "H-M", sans-serif;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    -webkit-overflow-scrolling: touch
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    float: left;
+}
+
+#mapLegend {
+    visibility: hidden;
+    position: absolute;
+    bottom: 66px;
+    left: 3px;
+    padding: 0px 8px 0px 8px;
+    border-radius: 7px;
+    border: 2px solid rgb(72, 80, 83);
+    color: #fff;
+    z-index: 998;
+    background-color: rgba(23, 30, 42, 0.6);
+}
+
+.legend-icon {
+    display: inline-block;
+    width: 23px;
+    height: 23px;
+    margin-right: 5px;
+    background-size: contain;
+}
+
+#mapLegend h3 {
+    font-size: 16px;
+    margin: 5px;
+    text-align: center;
+}
+
+#mapLegend span {
+    position: relative;
+    top: -6px;
+    font-size: 16px;
+}
+
+#center_lg span {
+    position: relative;
+    top: -7px;
+    right: 1px;
+}
+
+#center_lg img {
+    position: relative;
+    right: 1.1px;
+}
+
+#pWave_lg {
+    position: relative;
+    top: 1px;
+}
+
+#sWave1_lg {
+    position: relative;
+    left: -4px;
+}
+
+#sWave2_lg {
+    position: absolute;
+    top: 31px;
+    right: 5px;
+}
+
+#sWave2_lg span {
+    position: relative;
+    top: -5px;
+    left: -3px;
+}
+
+#container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: calc(100% - 282px);
+    height: 100%;
+    /* float: left; */
+    /* border-radius: 10px; */
+}
+
+#serverTime {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    color: white;
+    font-size: 21px;
+    z-index: 100;
+    /* font-weight: 700; */
+    font-family: "P-B";
+    text-shadow: 1px 1px 2px black;
+}
+
+#cencList {
+    position: absolute;
+    left: 2px;
+    top: 0px;
+    width: 282px;
+    height: 100%;
+    border-radius: 7px;
+    overflow: auto;
+    overflow-x: hidden;
+    background-color: #282e39;
+}
+
+[id^=list_Bar] {
+    position: relative;
+    left: 0;
+    height: 80px;
+    width: 276px;
+    border-radius: 10px;
+    background-color: #282828;
+    margin-top: 5px;
+}
+
+.listTime {
+    left: 2px;
+    top: 2px;
+    font-size: 18px;
+    color: #fff;
+    position: absolute;
+}
+
+.listDistance {
+    right: 7px;
+    top: 2px;
+    font-size: 18px;
+    letter-spacing: 0px;
+    color: #fff;
+    position: absolute;
+}
+
+.listEpicenter {
+    left: 60px;
+    top: 26px;
+    width: 220px;
+    font-size: 19px;
+    letter-spacing: 0px;
+    line-height: 18px;
+    color: #fff;
+    text-align: left;
+    position: absolute;
+}
+
+.listType {
+    right: 7px;
+    bottom: 18px;
+    font-size: 15px;
+    letter-spacing: 0px;
+    color: #b4b4b4;
+    position: absolute;
+}
+
+.listMagnitude {
+    left: 60px;
+    bottom: 0;
+    font-size: 20px;
+    color: #fff;
+    text-align: left;
+    position: absolute;
+}
+
+.listDepth {
+    right: 7px;
+    bottom: 0px;
+    font-size: 18px;
+    letter-spacing: 0px;
+    color: #fff;
+    text-align: right;
+    position: absolute;
+}
+
+.listMaxInt {
+    position: absolute;
+    height: 55px;
+    width: 55px;
+    left: 0;
+    bottom: 0;
+    background-color: #444;
+    border-radius: 10px;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    font-size: 35px;
+    font-family: "M-B";
+    text-align: center;
+}
+
+.popup-content {
+    background-color: rgba(32, 32, 32, 0.8);
+    /* border: 2px solid #5a6467; */
+    border-radius: 7px;
+    color: #fff;
+    font-size: 15px;
+    font-family: "H-M";
+    line-height: 0.40;
+    text-align: left;
+    padding: 5px
+}
+
+.close_img {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    background-color: #ffffff;
+}
+
+.dimmed {
+    opacity: 0.5;
+    cursor: pointer;
+    transition: 0.3s;
+    background: radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), rgb(255 255 255 / 20%), transparent 40%);
+}
+
+input {
+    font-family: "H-M";
+}
+
+#set-EaseTo {
+    position: absolute;
+    z-index: 100;
+    left: 10px;
+    top: 20px;
+    border-radius: 6px;
+    background-color: #444 !important;
+    color: #fff;
+}
+
+#cencPopupsclose {
+    position: absolute;
+    z-index: 100;
+    left: 10px;
+    top: 48px;
+    border-radius: 6px;
+    background-color: #444 !important;
+    color: #fff;
+}
+
+#eew_Bar {
+    visibility: hidden;
+    position: absolute;
+    right: 2px;
+    bottom: 35px;
+    width: 300px;
+    height: 250px;
+    border-radius: 7px;
+    color: #fff;
+    background-color: rgba(81, 164, 243, 0.63);
+    backdrop-filter: blur(3px);
+    z-index: 1000000;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#eew_source {
+    top: 2px;
+    /* padding-bottom: 1px; */
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    height: auto;
+    font-size: 20px;
+    font-family: "H-M";
+}
+
+#eew_Information {
+    position: absolute;
+    padding: 7px 5px;
+    font-size: 19px;
+    top: 28px;
+    /* border: 1px solid #fff; */
+    width: 288px;
+    height: auto;
+}
+
+#eew_countdown {
+    position: absolute;
+    font-size: 80px;
+    font-family: "H-B";
+    top: 113px;
+    width: 294px;
+    height: 95px;
+    border-radius: 10px;
+    border: 3px solid rgba(255, 255, 255, 0.7);
+    text-align: center;
+}
+
+#miaohou {
+    visibility: hidden;
+    position: absolute;
+    font-size: 20px;
+    font-family: "H-M";
+    bottom: 40px;
+    right: 5px;
+}
+
+#eew_wavedown {
+    position: absolute;
+    font-size: 20px;
+    bottom: 5px;
+    width: 100%;
+    font-family: "H-M";
+    text-align: center;
+    /* border-bottom: 1px solid #fff; */
+}
+
+#updateButton {
+    position: absolute;
+    left: 10px;
+    top: 117px;
+    width: 46px;
+    height: 32px;
+    border-radius: 6px;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+    padding: 5px;
+    z-index: 500;
+}
+
+/* 设置部分 */
+#settings-icon {
+    position: absolute;
+    left: 10px;
+    top: 75px;
+    border-radius: 6px;
+    background-color: #444 !important;
+    color: #fff;
+    cursor: pointer;
+    z-index: 500;
+}
+
+/* 标题样式 */
+#settings-box h2 {
+    margin: 0 0 15px;
+    /* 标题下边距 */
+    font-size: 1.5em;
+    /* 字体大小 */
+    text-align: center;
+    /* 居中对齐 */
+}
+
+/* 表单组样式 */
+.form-group {
+    margin-bottom: 15px;
+    /* 表单组下边距 */
+}
+
+/* 标签样式 */
+.form-group label {
+    display: block;
+    /* 标签块级显示 */
+    margin-bottom: 5px;
+    /* 标签下边距 */
+    font-weight: bold;
+    /* 加粗 */
+}
+
+/* 输入框样式 */
+.form-group input {
+    width: 93%;
+    /* 输入框宽度 */
+    padding: 10px;
+    /* 内边距 */
+    border: 1px solid #666;
+    /* 边框 */
+    border-radius: 5px;
+    /* 圆角 */
+    background-color: #555;
+    /* 背景色 */
+    color: #fff;
+    /* 字体颜色 */
+    transition: border-color 0.3s ease;
+    /* 边框颜色过渡 */
+}
+
+.form-group input:focus {
+    border-color: #007bff;
+    /* 聚焦时边框颜色 */
+    outline: none;
+    /* 去掉默认轮廓 */
+}
+
+/* 按钮组样式 */
+.button-group {
+    display: flex;
+    /* 使用 flexbox 布局 */
+    justify-content: space-between;
+    /* 按钮间距 */
+    margin-bottom: 0px;
+}
+
+/* 按钮样式 */
+.button-group button {
+    background-color: #007bff;
+    /* 默认按钮背景色 */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    /* 按钮过渡效果 */
+    flex: 1;
+    /* 按钮均分宽度 */
+    margin: 0 5px;
+    /* 按钮间距 */
+}
+
+/* 保存按钮样式 */
+#save-settings {
+    background-color: #5cb85c;
+    /* 绿色 */
+}
+
+#save-settings:hover {
+    background-color: #2e5c2e;
+}
+
+/* 取消按钮样式 */
+#cancel-settings {
+    background-color: #d9534f;
+    /* 红色 */
+}
+
+#cancel-settings:hover {
+    background-color: #6d2927;
+}
+
+#settings-icon img {
+    width: 30px;
+}
+
+button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 3px;
+    font-family: "H-M";
+}
+
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    z-index: 999;
+}
+
+#settings-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    /* 固定宽度 */
+    max-width: 90%;
+    /* 最大宽度 */
+    transform: translate(-50%, -50%);
+    background-color: #444;
+    /* 背景色 */
+    padding: 20px;
+    border-radius: 10px;
+    /* 圆角 */
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    /* 阴影 */
+    display: none;
+    /* 初始隐藏 */
+    z-index: 1000;
+    transition: all 250ms ease;
+    /* 过渡效果 */
+}
+
+i {
+    font-family: "iconfont";
+    font-size: 22px;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-stroke-width: 0;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.close-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+.beian {
+    position: absolute;
+    font-size: 10px;
+    top: 1px;
+    right: 2px;
+    color: #b4b4b4;
+    z-index: 100;
+    text-decoration: none;
+}
+
+.beian2 {
+    position: absolute;
+    font-size: 10px;
+    top: 1px;
+    right: 110px;
+    color: #b4b4b4;
+    z-index: 100;
+    text-decoration: none;
+}
+
+.vsiontext {
+    position: absolute;
+    font-size: 14px;
+    top: 2px;
+    left: 2px;
+    color: #b4b4b4;
+    z-index: 100;
+}
+
+.tmap-scale-text {
+    color: #fff !important;
+    font-family: "H-B" !important;
+    -webkit-text-stroke: 0.5px black;
+}
+
+.fade {
+    animation: fade 6s infinite;
+}
+
+/*.pga-tooltip {*/
+	/*position: absolute;*/
+	/*background-color: #21252b;*/
+	/*color: #fff;*/
+	/*padding: 5px;*/
+	/*border-radius: 5px;*/
+	/*top: 20px;*/
+	/*left: 0;*/
+/*}*/
