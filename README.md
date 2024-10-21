@@ -19,4 +19,4 @@
 由于此软件造成的任何人力物力财力等损失与作者无关
 
 ## API 源 使用
-[wolfx 防灾A PI](https://wolfx.jp/apidoc)
+[Wolfx 防灾API](https://wolfx.jp/apidoc)
