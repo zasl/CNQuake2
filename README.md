@@ -1,5 +1,5 @@
 # CNQuake2
-基于`HTML`+`JavaScript`+`css`的`地震预警`软件
+基于`HTML`+`JavaScript`+`css`的一个中国地震信息可视化`PWA`软件
 如果此软件侵犯了您的权益，请发 Issue 或 联系我 liujh5913@petalmail.com
 将会尽快处理
 
