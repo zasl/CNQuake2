@@ -611,7 +611,7 @@ async function getICLData() {
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] FAN =>", icljson);
+            console.log("[轮询ICL] 个人 =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -619,7 +619,7 @@ async function getICLData() {
             }
         } else {
             // 如果第一个URL失败，则抛出错误
-            throw new Error("FAN啊，咋没了啊");
+            throw new Error("轮询1的连接错误");
         }
     } catch (error) {
         // 捕获错误，尝试访问第二个URL
@@ -1406,6 +1406,7 @@ function setSmoothRadius(circle, targetRadius, lat, lon, psWave) {
     // console.log("平滑过渡", psWave, diff, step, "当前Radius", currentRadius, "目标Radius", targetRadius);
 }
 
+// 本地烈度算法 from kengwang
 function calcHomeMaxInt(震级, 距离) {
     let 本地烈度 = ((震级 * 1.363) + 2.941) - (Math.log(距离 + 7.0) * 1.494);
     // 本地烈度可视化
