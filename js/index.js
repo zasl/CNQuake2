@@ -541,8 +541,8 @@ async function getAllData() {
                 发震时间: ${json.No1.time}(UTC+9)<br>
                 震中: ${json.No1.location || "调查中"}（${json.No1.latitude || "?"}, ${json.No1.longitude || "?"}）<br>
                 震级: ${json.No1.magnitude || "?"}<br>
-                最大震度: ${json.No1.shindo}<br>
                 深度: ${json.No1.depth}<br>
+                最大震度: ${json.No1.shindo}<br>
             `, "日本气象厅情报");
         }
 
