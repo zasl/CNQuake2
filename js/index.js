@@ -1240,16 +1240,10 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
             let 实时时差 = currentTimestamp - 发震时间,
                 发震时间减去秒数 = 实时时差 / 1000;
 
-            if (深度 || seeScDepICL) {
-                if (seeScDepICL) 深度 = seeScDepICL;
-                S波倒计时 = S波倒计时 ? S波倒计时 - 1 : countdown(距离, 深度, 发震时间减去秒数);
-                setSmoothRadius(sWave, calcWaveDistance(false, 深度, 发震时间减去秒数) * 1000, lat, lon, "sWave");
-                setSmoothRadius(pWave, calcWaveDistance(true, 深度, 发震时间减去秒数) * 1000, lat, lon, "pWave");
-            } else {
-                S波倒计时 = S波倒计时 ? S波倒计时 - 1 : countdown(距离, null, 发震时间减去秒数);
-                setSmoothRadius(sWave, 发震时间减去秒数 * 4000, lat, lon, "sWave");
-                setSmoothRadius(pWave, 发震时间减去秒数 * 7000, lat, lon, "pWave");
-            }
+            if (seeScDepICL) 深度 = seeScDepICL;
+            S波倒计时 = S波倒计时 ? S波倒计时 - 1 : countdown(距离, 深度, 发震时间减去秒数);
+            setSmoothRadius(sWave, calcWaveDistance(false, 深度, 发震时间减去秒数) * 1000, lat, lon, "sWave");
+            setSmoothRadius(pWave, calcWaveDistance(true, 深度, 发震时间减去秒数) * 1000, lat, lon, "pWave");
 
             if (S波倒计时 <= 0) {
                 $("#eew_countdown").text("到达");
@@ -1305,16 +1299,15 @@ function eewCancel() {
     setTimeout(easeTo, 500);
 }
 
-function countdown(distance, depth, ctime) {
-    depth = depth ?? 10;
+function countdown(distance, depth = 10, ctime) {
     const cds = HEQC.getCountDownSeconds(depth, distance),
         countdowns = cds - ctime;
     return countdowns.toFixed(0);
     // parseInt((distance + depth) / 4 - ctime);
 }
 
-// 计算圆距离 from Lipo
-function calcWaveDistance(isPWave, depth, time) {
+// 计算地震波半径距离 from Lipo
+function calcWaveDistance(isPWave, depth = 10, time) {
     const {
         depths,
         distances
@@ -1367,6 +1360,7 @@ function binarySearch(arr, target) {
     return left - 1;
 }
 
+// 平滑震波
 function setSmoothRadius(circle, targetRadius, lat, lon, psWave) {
     // console.log(circle, targetRadius, lat, lon, psWave);
     let currentRadius = circle.getGeometries();
@@ -1416,6 +1410,7 @@ function calcHomeMaxInt(震级, 距离) {
 
 let maxIntmarker = null;
 
+// 计算震源周围的烈度
 function locteMaxint(lon, lat, magnitude) {
     removeInt();
     let distanceGround = Math.exp(((magnitude * 1.363) + 2.941) / 1.494) - 7.0; // 受灾区域
@@ -1790,29 +1785,29 @@ async function toSimplified(text) {
     // const url2 = `这里填繁转简备用连接`;
 
     // try {
-        // const response1 = await fetch(url1);
-        // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
-        // const {
-            // text: simplifiedText1
-        // } = await response1.json();
-        // return simplifiedText1;
+    // const response1 = await fetch(url1);
+    // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
+    // const {
+    // text: simplifiedText1
+    // } = await response1.json();
+    // return simplifiedText1;
     // } catch (error1) {
-        // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
-        // try {
-            // const response2 = await fetch(url2);
-            // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
-            // const {
-                // data: {
-                    // convertContent: simplifiedText2
-                // }
-            // } = await response2.json();
-            // return simplifiedText2;
-        // } catch (error2) {
-            // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
-            // return text;
-        // }
+    // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
+    // try {
+    // const response2 = await fetch(url2);
+    // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
+    // const {
+    // data: {
+    // convertContent: simplifiedText2
     // }
-    
+    // } = await response2.json();
+    // return simplifiedText2;
+    // } catch (error2) {
+    // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
+    // return text;
+    // }
+    // }
+
     // 有繁转简API时可以取消注释并删除下面的 return text;
     return text;
 }
