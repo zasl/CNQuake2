@@ -1,5 +1,5 @@
 # CNQuake2
-基于`[HTML](https://developer.mozilla.org/zh-CN/docs/Web/HTML)`+`[JavaScript](https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript)`+`[css](https://developer.mozilla.org/zh-CN/docs/Web/CSS)`的一个中国地震信息可视化`[PWA](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)`软件
+基于[`HTML`](https://developer.mozilla.org/zh-CN/docs/Web/HTML)+[`JavaScript`](https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript)+[`css`](https://developer.mozilla.org/zh-CN/docs/Web/CSS)的一个中国地震信息可视化[`PWA`](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)软件
 如果此软件侵犯了您的权益，请发`Issue`或 联系我 liujh5913@petalmail.com
 将会尽快处理
 
