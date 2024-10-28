@@ -1,10 +1,10 @@
 # CNQuake2
-基于`HTML`+`JavaScript`+`css`的一个中国地震信息可视化`PWA`软件
-如果此软件侵犯了您的权益，请发 Issue 或 联系我 liujh5913@petalmail.com
+基于`[HTML](https://developer.mozilla.org/zh-CN/docs/Web/HTML)`+`[JavaScript](https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript)`+`[css](https://developer.mozilla.org/zh-CN/docs/Web/CSS)`的一个中国地震信息可视化`[PWA](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps)`软件
+如果此软件侵犯了您的权益，请发`Issue`或 联系我 liujh5913@petalmail.com
 将会尽快处理
 
 ## 注意
-需要在一个`https`环境里运行，且需要`SSL证书`，不能以`file`打开，因为有以下几点：
+需要在一个`https`环境里运行，且需要`SSL`证书，不能以`file`打开，因为有以下几点：
 1. 腾讯地图不允许，因为`CORS`跨域问题，否则地图上的所有图标都为默认`Marker`。
 2. 只有安全的连接才能使用`PWA`和`Service worker`，才能发送通知。
 
