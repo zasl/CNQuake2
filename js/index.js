@@ -536,13 +536,14 @@ async function getAllData() {
         }
 
         if (json.type == "jma_eqlist") {
-            toastr.info(json.No1.Title + "<br>" +
-                "发震时间:" + json.No1.time + "<br>" +
-                "震中:" + json.No1.location + "（" + json.No1.latitude + "," + json.No1.longitude + "）" +
-                "<br>" +
-                "震级:" + json.No1.magnitude + "<br>" +
-                "最大震度:" + json.No1.shindo + "<br>" +
-                "深度:" + json.No1.depth, "日本气象厅情报")
+            toastr.info(`
+                ${json.No1.Title}<br>
+                发震时间: ${json.No1.time}(UTC+9)<br>
+                震中: ${json.No1.location || "调查中"}（${json.No1.latitude || "?"}, ${json.No1.longitude || "?"}）<br>
+                震级: ${json.No1.magnitude || "?"}<br>
+                最大震度: ${json.No1.shindo}<br>
+                深度: ${json.No1.depth}<br>
+            `, "日本气象厅情报");
         }
 
         if (json.type == "jma_eew") {
@@ -1299,7 +1300,8 @@ function eewCancel() {
     setTimeout(easeTo, 500);
 }
 
-function countdown(distance, depth = 10, ctime) {
+function countdown(distance, depth, ctime) {
+    depth = depth ?? 10;
     const cds = HEQC.getCountDownSeconds(depth, distance),
         countdowns = cds - ctime;
     return countdowns.toFixed(0);
@@ -1307,7 +1309,8 @@ function countdown(distance, depth = 10, ctime) {
 }
 
 // 计算地震波半径距离 from Lipo
-function calcWaveDistance(isPWave, depth = 10, time) {
+function calcWaveDistance(isPWave, depth, time) {
+    depth = depth ?? 10;
     const {
         depths,
         distances
