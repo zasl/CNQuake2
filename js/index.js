@@ -71,9 +71,9 @@ function showCustomNotification(title, message) {
                     // 显示通知
                     registration.showNotification(title, {
                         body: message,
-                        icon: "/img/icon512.png",
+                        icon: "./img/icon512.png",
                         data: {
-                            url: "/"
+                            url: "./"
                         }
                     });
                 });
@@ -101,7 +101,7 @@ function registerServiceWorker() {
             }
         } else {
             // 如果没有注册，注册serviceWorker
-            navigator.serviceWorker.register("/sw.js").then(registration => {
+            navigator.serviceWorker.register("./sw.js").then(registration => {
                 console.log("[注册SW] ServiceWorker 注册成功，作用域 =>", registration.scope);
             }).catch(error => {
                 // 如果注册失败，记录错误
@@ -763,17 +763,20 @@ function cencRun(json) {
             listBar.removeEventListener("click", createClickHandler(listLongitude, listLatitude));
             listBar.addEventListener("click", createClickHandler(listLongitude, listLatitude));
             if (i === 1) {
-                $(`#listType${i}`).text(listType);
+                let isone;
+                $("#listType1").text(listType);
                 if (!oneAudio) {
                     oneAudio = true;
+                    isone = true;
                     showCustomNotification("通知已开启", "如果看到此信息，表明预警信息推送已开启。");
                 } else {
                     audioCENC.play();
                     let cencShow = `中国地震台网${listType}: ${listTimeDisply} 在 ${listEpicenter} 发生${listMagnitude}级地震，震源深度${listDepth}km，预估最大烈度${listMaxInt}度`;
                     showCustomNotification("地震信息", cencShow);
+                    isone = false;
                     tts(null, null, null, cencShow);
                 }
-                eew("cenc", listTime, listEpicenter, parseFloat(listLatitude), parseFloat(listLongitude), parseFloat(listMagnitude), listType, null, parseFloat(listDepth));
+                eew("cenc", listTime, listEpicenter, parseFloat(listLatitude), parseFloat(listLongitude), parseFloat(listMagnitude), listType, null, parseFloat(listDepth), isone);
             } else {
                 $(`#listType${i}`).text(`No.${i}`);
             }
@@ -1078,7 +1081,7 @@ EpicenterMarker.prototype.updateDOM = function() {
 let seeScDepICL = false;
 
 // 本预警函数特地典型使用中文变量名，清晰易懂awa
-async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null) {
+async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null, isOneCENC = true) {
     if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") 发震时间 = new Date(发震时间 + " GMT+0800").getTime();
     if (类型 == "jma_eew" || 类型 == "jma_tw_eew") {
         let japanTime = 发震时间,
@@ -1097,10 +1100,6 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
                 toastr.info(震中 + " M" + 震级 + " 深度" + 深度 + "km", "补深度");
                 seeScDepICL = 深度;
             }
-            return;
-        }
-        if (类型 == "cenc" && scSta || 类型 == "cenc" && twSta) {
-            console.log(`[eew] 省地震局正在预警，cenc不是预警 => ${类型} ${震中}`);
             return;
         }
 
@@ -1276,7 +1275,7 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
 
         $("#eew_Bar, #mapLegend").css("visibility", "visible");
         if (本地烈度 > 0) addHomeToMap();
-        tts(sourceText, 震中, 震级);
+        if (isOneCENC) tts(sourceText, 震中, 震级);
         setTimeout(() => fitWaveBounds(本地烈度), 1000);
     } else {
         类型 == "icl" ?
