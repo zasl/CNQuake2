@@ -1148,7 +1148,7 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
         }
 
         $("#eew_source").text(sourceText);
-        showCustomNotification(sourceText, message);
+        if (isOneCENC) showCustomNotification(sourceText, message);
 
         if (最大烈度 == null) 最大烈度 = "约" + calcMaxInt(震级, 10, 震中);
 
