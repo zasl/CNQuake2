@@ -1,11 +1,11 @@
 {
     "name": "CNQuake2",
     "short_name": "CNDW",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#1e6e64",
     "theme_color": "#212121",
-    "scope": "/",
+    "scope": "./",
     "lang": "zh",
     "id": "tech.fan0225.cnquake",
     "description": "一个中国地震信息、地震预警可视化程序",
