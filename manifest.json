@@ -1,0 +1,30 @@
+{
+    "name": "CNQuake2",
+    "short_name": "CNDW",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#1e6e64",
+    "theme_color": "#212121",
+    "scope": "./",
+    "lang": "zh",
+    "id": "com.github.cnquake",
+    "description": "一个中国地震信息、地震预警可视化程序",
+    "orientation": "landscape",
+    "categories": [
+        "security",
+        "utilities",
+        "weather"
+    ],
+    "icons": [
+        {
+            "src": "img/earth192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "img/earth512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
