@@ -1300,7 +1300,7 @@ function countdown(distance, depth, ctime) {
     depth = depth ?? 10;
     const cds = HEQC.getCountDownSeconds(depth, distance),
         countdowns = cds - ctime;
-    return countdowns.toFixed(0);
+    return Math.floor(countdowns);
     // parseInt((distance + depth) / 4 - ctime);
 }
 
@@ -1770,27 +1770,27 @@ async function toSimplified(text) {
     // const url2 = `备用API`;
 
     // try {
-        // const response1 = await fetch(url1);
-        // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
-        // const {
-            // text: simplifiedText1
-        // } = await response1.json();
-        // return simplifiedText1;
+    // const response1 = await fetch(url1);
+    // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
+    // const {
+    // text: simplifiedText1
+    // } = await response1.json();
+    // return simplifiedText1;
     // } catch (error1) {
-        // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
-        // try {
-            // const response2 = await fetch(url2);
-            // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
-            // const {
-                // data: {
-                    // convertContent: simplifiedText2
-                // }
-            // } = await response2.json();
-            // return simplifiedText2;
-        // } catch (error2) {
-            // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
-            // return text;
-        // }
+    // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
+    // try {
+    // const response2 = await fetch(url2);
+    // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
+    // const {
+    // data: {
+    // convertContent: simplifiedText2
+    // }
+    // } = await response2.json();
+    // return simplifiedText2;
+    // } catch (error2) {
+    // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
+    // return text;
+    // }
     // }
     // 翻译API自己填，填了之后取消注释就行
     return text;
