@@ -366,6 +366,15 @@ input {
     /* border-bottom: 1px solid #fff; */
 }
 
+#vsiontext {
+    position: absolute;
+    font-size: 14px;
+    top: 2px;
+    left: 2px;
+    color: #b4b4b4;
+    z-index: 100;
+}
+
 #updateButton {
     position: absolute;
     left: 10px;
@@ -571,15 +580,6 @@ i {
     text-decoration: none;
 }
 
-.vsiontext {
-    position: absolute;
-    font-size: 14px;
-    top: 2px;
-    left: 2px;
-    color: #b4b4b4;
-    z-index: 100;
-}
-
 .tmap-scale-text {
     color: #fff !important;
     font-family: "H-B" !important;
@@ -590,12 +590,12 @@ i {
     animation: fade 6s infinite;
 }
 
-/*.pga-tooltip {*/
-	/*position: absolute;*/
-	/*background-color: #21252b;*/
-	/*color: #fff;*/
-	/*padding: 5px;*/
-	/*border-radius: 5px;*/
-	/*top: 20px;*/
-	/*left: 0;*/
-/*}*/
+/* .pga-tooltip {
+    position: absolute;
+    background-color: #21252b;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    top: 20px;
+    left: 0;
+} */
