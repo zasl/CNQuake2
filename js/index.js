@@ -710,9 +710,9 @@ function iclRun(json, type) {
 
 $(document).ready(() => {
     getAllData();
-    setTimeout(() => {
-        setInterval(getICLData, 5000);
-    }, 3000);
+    // setTimeout(() => {
+        // setInterval(getICLData, 5000);
+    // }, 3000);
 });
 
 function cencRun(json) {
