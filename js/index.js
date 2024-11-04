@@ -1,3 +1,5 @@
+const version = "v2.0.git1104";
+
 document.addEventListener("keydown", function(event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
     if (
@@ -36,7 +38,10 @@ async function isMobile() {
     return isMobile1;
 }
 
-if (!isMobile()) document.addEventListener("contextmenu", event => event.preventDefault());
+isMobile().then(isMobile1 => {
+    if (!isMobile1) document.addEventListener("contextmenu", event => event.preventDefault());
+});
+$("#vsiontext").text(version);
 let homeLat = localStorage.getItem("latitude");
 let homeLon = localStorage.getItem("longitude");
 let homeLocte = localStorage.getItem("location");
@@ -45,7 +50,7 @@ if (!homeLat || !homeLon || !homeLocte) {
     homeLat = "31.08";
     homeLon = "104.38";
     homeLocte = "德阳市旌阳区";
-    console.error("[经纬度判定] 未设置设置,已默认");
+    console.warn("[经纬度判定] 未设置设置,已默认");
     toastr.info("请到设置中填写您所在地地名及经纬度信息，否则默认为德阳市旌阳区")
 }
 
@@ -164,7 +169,6 @@ if ("serviceWorker" in navigator) {
     });
 }
 
-// CENC烈度颜色 from CEIV2
 const intColor = {
     "1": {
         color: "white",
@@ -232,13 +236,36 @@ const intColor = {
 
 //初始化地图
 const map = new TMap.Map("map", {
-    center: new TMap.LatLng(37.093496518166944, 107.79942839007867), //设置中心点坐标,
+    center: new TMap.LatLng(37.093496518166944, 107.79942839007867), //设置中心点坐标
     zoom: 4,
     mapStyleId: "style2"
 });
 
+function destroyAndNullify(objects, t = null) {
+    if (!objects) {
+        console.error(`[销毁] "${t}"是假的 =>`, objects);
+        return;
+    }
+
+    const isArray = Array.isArray(objects);
+    const items = isArray ? objects : [objects];
+
+    items.forEach((obj, index) => {
+        if (obj !== null) {
+            console.log(`[销毁] 开始销毁 "${t}" 中的对象 ${index} =>`, obj);
+            obj.destroy();
+            obj = null;
+            console.log(`[销毁] 对象 ${index} 已销毁 =>`, obj);
+        } else {
+            console.log(`[销毁] 对象 ${index} 已经是 null =>`, obj);
+        }
+    });
+
+    console.log(`[销毁] 已销毁 "${t}" 中的所有对象 =>`, isArray ? items : items[0]);
+}
+
 // 卫星图
-let imageTileLayer = new TMap.ImageTileLayer({
+const imageTileLayer = new TMap.ImageTileLayer({
     getTileUrl: function(x, y, z) {
         return "https://bgn1.gpstool.com/maps/vt?lyrs=s&v=982&gl=cn&x=" + x + "&y=" + y + "&z=" + z;
     },
@@ -270,18 +297,15 @@ async function fetchWeatherData() {
     }
 }
 
+let rainviewerLayer;
 // 创建图层的函数
 async function createImageTileLayer() {
     const latestTimestamp = await fetchWeatherData();
 
     if (latestTimestamp) {
-        if (window.imageTileLayer) {
-            window.imageTileLayer._removeSource();
-            window.imageTileLayer.setMap(null);
-            window.imageTileLayer = null;
-        }
+        if (rainviewerLayer) destroyAndNullify(rainviewerLayer, "降水图层");
         // 创建新的图层
-        window.imageTileLayer = new TMap.ImageTileLayer({
+        rainviewerLayer = new TMap.ImageTileLayer({
             getTileUrl: function(x, y, z) {
                 let url = "https://tilecache.rainviewer.com/v2/radar/" + latestTimestamp + "/512/" + z + "/" + x + "/" + y + "/4/1_1.png";
                 return url;
@@ -299,20 +323,14 @@ async function createImageTileLayer() {
     }
 }
 
-// 在腾讯地图GL未解决win图层WebGL上下文丢失导致地图崩溃问题之前不图层
-function isWindows() {
-    return navigator.userAgent.toLowerCase().indexOf("win") == -1;
-}
-
-if (isWindows()) {
-    // 调用函数以创建图层
-    createImageTileLayer();
-    // 每 2 分钟更新一次图层
-    setInterval(createImageTileLayer, 120000); // 2分钟
-}
+// 调用函数以创建图层
+createImageTileLayer();
+// 每 2 分钟更新一次图层
+setInterval(createImageTileLayer, 120000); // 2分钟
 
 let delta, cencmd51, S波倒计时, oneAudio = false,
     CurrentTime, 更新秒数, cencMarkers = null,
+    maxIntmarker = null,
     // oldTime,
     dingWern = false,
     eewBounds = false,
@@ -329,7 +347,6 @@ let delta, cencmd51, S波倒计时, oneAudio = false,
     currentTimestamp;
 const warnJPcenters = ["台湾付近", "与那国島近海", "石垣島北西沖", "石垣島南方沖", "西表島付近", "石垣島近海"];
 
-// 倒计时算法 from kengwang
 class HEQC {
     static SLOPE = [0.23335281, 0.23347212, 0.23335606, 0.23335613, 0.23335539, 0.23335367, 0.23335291];
     static INTERCEPT = [8.567052, 7.5333714, 6.667651, 8.562906, 7.877903, 7.191011, 6.5055184];
@@ -603,16 +620,16 @@ function justTimeColor() {
     $("#serverTime").css("color", timeCs ? "white" : "#f51c15");
 }
 
-const icurl2 = `这里填写ICL官方预警源`;
+const icurl2 = `ICL API`;
 
 async function getICLData() {
-    const icurl1 = `这里填写个人ICL预警源?${currentTimestamp}`;
+    const icurl1 = `备用ICL API?${currentTimestamp}`;
     try {
         // 尝试访问第一个URL
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] 个人 =>", icljson);
+            console.log("[轮询ICL] 1 =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -620,7 +637,7 @@ async function getICLData() {
             }
         } else {
             // 如果第一个URL失败，则抛出错误
-            throw new Error("轮询1的连接错误");
+            throw new Error("第一个咋没了啊");
         }
     } catch (error) {
         // 捕获错误，尝试访问第二个URL
@@ -628,7 +645,7 @@ async function getICLData() {
             let response = await fetch(icurl2);
             if (response.ok) {
                 let icljson = await response.json();
-                console.log("[轮询ICL] 访问官方 =>", icljson);
+                console.log("[轮询ICL] 2 =>", icljson);
                 iclRun(icljson, "icl");
                 if (!timeCs) {
                     timeCs = true;
@@ -636,11 +653,11 @@ async function getICLData() {
                 }
             } else {
                 // 如果第二个URL也失败，则处理错误或抛出异常
-                console.error("[轮询ICL] 1 -> 不是网络问题就是官方出事了");
+                console.error("[轮询ICL] 1 -> 不是网络问题就是出事了");
             }
         } catch (error) {
             // 如果第二个请求也失败，则处理错误
-            console.error("[轮询ICL] 2 -> 那就是不是网络问题就是官方出事了 =>", error);
+            console.error("[轮询ICL] 2 -> 那就是不是网络问题就是出事了 =>", error);
             if (timeCs) {
                 timeCs = false;
                 justTimeColor();
@@ -693,14 +710,13 @@ function iclRun(json, type) {
 
 $(document).ready(() => {
     getAllData();
-    // setTimeout(() => {
-    // setInterval(getICLData, 5000);
-    // }, 3000);
-    // 如果你有ICL源可以在这里取消注释
+    setTimeout(() => {
+        setInterval(getICLData, 5000);
+    }, 3000);
 });
 
 function cencRun(json) {
-    let cencmd5 = json.No1.ReportTime;
+    const cencmd5 = json.No1.ReportTime;
     if (cencmd5 !== cencmd51) {
         cencmd51 = cencmd5;
 
@@ -724,41 +740,34 @@ function cencRun(json) {
 
         for (let i = 1; i <= 50; i++) {
             let listType = json[`No${i}`].type;
-            let listDepth = json[`No${i}`].depth;
-            let listEpicenter = json[`No${i}`].location;
-            let listMagnitude = json[`No${i}`].magnitude;
-            let listLatitude = json[`No${i}`].latitude;
-            let listLongitude = json[`No${i}`].longitude;
-            let listTime = json[`No${i}`].time;
-            let listMaxInt = calcMaxInt(listMagnitude, listDepth, listEpicenter);
-            let listMaxInt2 = Math.floor(listMaxInt);
-            let listDistance = Math.floor(getDistance(listLatitude, listLongitude, homeLat, homeLon));
+            const listDepth = json[`No${i}`].depth;
+            const listEpicenter = json[`No${i}`].location;
+            const listMagnitude = json[`No${i}`].magnitude;
+            const listLatitude = json[`No${i}`].latitude;
+            const listLongitude = json[`No${i}`].longitude;
+            const listTime = json[`No${i}`].time;
+            const listMaxInt = calcMaxInt(listMagnitude, listDepth, listEpicenter);
+            const listMaxInt2 = Math.floor(listMaxInt);
+            const listDistance = Math.floor(getDistance(listLatitude, listLongitude, homeLat, homeLon));
             listType = listType === "automatic" ? "自动测定" : "正式测定";
+
             calclistEpicenterTopSize(listEpicenter, i);
             $(`#listDistance${i}`).text(`${listDistance}km`);
-
             $(`#listDepth${i}`).text(`深度:${listDepth}km`);
             $(`#listEpicenter${i}`).text(listEpicenter);
-            if (listMagnitude >= 4) {
-                $(`#listMagnitude${i}`).text(`M${listMagnitude}`).css("color", "goldenrod");
-            } else {
-                $(`#listMagnitude${i}`).text(`M${listMagnitude}`).css("color", "white");
-            }
-
-            let thisbggcolor = intColor[listMaxInt2].oright;
-
+            const magColor = listMagnitude < 3.5 ? "#B2D4F2" : listMagnitude < 4 ? "#4fa6f3" : listMagnitude < 5 ? "#fec118" : listMagnitude < 6 ? "#fb8a23" : "#f7455c";
+            $(`#listMagnitude${i}`).text(`M${listMagnitude}`).css("color", magColor);
+            const thisbggcolor = intColor[listMaxInt2].oright;
             $(`#listMaxInt${i}`).text(listMaxInt2).css({
                 "background-color": intColor[listMaxInt2].backgroundColor,
                 "color": intColor[listMaxInt2].color,
                 "border": `1px solid ${thisbggcolor}`
             });
-
             createPopupAndMarker(i, listType, listTime, listEpicenter, listLatitude, listLongitude, listMagnitude, listDepth, listMaxInt, cencGeometries, thisbggcolor);
 
-            let listTimeDisply = cencTimeDisply(listTime);
-
+            const listTimeDisply = cencTimeDisply(listTime);
             $(`#listTime${i}`).text(listTimeDisply);
-            let listBar = document.getElementById(`list_Bar${i}`);
+            const listBar = document.getElementById(`list_Bar${i}`);
             listBar.style.border = (i === 1 ? "2px solid " : "1px solid ") + thisbggcolor;
             listBar.removeEventListener("click", createClickHandler(listLongitude, listLatitude));
             listBar.addEventListener("click", createClickHandler(listLongitude, listLatitude));
@@ -873,7 +882,6 @@ function createPopupAndMarker(i, listType, listTime, listEpicenter, listLatitude
     }
 }
 
-// 最大烈度算法 from wolfx
 function calcMaxInt(magnitude, depth, location = "") {
     magnitude = Number(magnitude);
     depth = Number(depth);
@@ -1188,18 +1196,9 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
         }
 
         clearInterval(更新秒数);
-        if (scSta && twSta) {
-            pWave.destroy();
-            sWave.destroy();
-            epicenteral.destroy();
-            toastr.warning("四川和台湾同时预警，我们不知所措")
-            // 难道就真的不允许地球同时在四川和台湾地震吗？就不能多震适配吗？
-        } else {
-            if (pWave !== null) pWave.destroy();
-            if (sWave !== null) sWave.destroy();
-            if (epicenteral !== null) epicenteral.destroy();
-        }
-
+        if (scSta && twSta) toastr.warning("四川和台湾同时预警，我们不知所措");
+        // 难道就真的不允许地球同时在四川和台湾地震吗？就不能多震适配吗？
+        destroyAndNullify([epicenteral, sWave, pWave], "覆盖新的预警");
         locteMaxint(lon, lat, 震级);
 
         const createCircle = (styleId1, color, borderColor, center1) => {
@@ -1216,7 +1215,7 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
                 geometries: [{
                     styleId: styleId1,
                     center: center1,
-                    radius: null,
+                    radius: 1,
                 }],
             });
         }
@@ -1286,16 +1285,14 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
 
 function eewCancel() {
     $("#eew_Bar, #mapLegend").css("visibility", "hidden");
-    epicenteral.destroy();
-    sWave.destroy();
-    pWave.destroy();
-    removeInt();
+    destroyAndNullify([maxIntmarker, epicenteral, sWave, pWave], "预警结束");
     eewBounds = false;
     twSta = false;
     scSta = false;
     seeScDepICL = false;
     S波倒计时 = null;
     clearInterval(更新秒数);
+    更新秒数 = null;
     setTimeout(easeTo, 500);
 }
 
@@ -1307,7 +1304,6 @@ function countdown(distance, depth, ctime) {
     // parseInt((distance + depth) / 4 - ctime);
 }
 
-// 计算地震波半径距离 from Lipo
 function calcWaveDistance(isPWave, depth, time) {
     depth = depth ?? 10;
     const {
@@ -1362,20 +1358,22 @@ function binarySearch(arr, target) {
     return left - 1;
 }
 
-// 平滑震波
 function setSmoothRadius(circle, targetRadius, lat, lon, psWave) {
     // console.log(circle, targetRadius, lat, lon, psWave);
+    if (!circle) {
+        console.log(`[平滑震波] ${psWave} 不在了 =>`, circle);
+        return;
+    }
     let currentRadius = circle.getGeometries();
     currentRadius = currentRadius[0].radius;
     let diff = targetRadius - currentRadius;
-    // 如果****，直接设置目标半径而不进行平滑过渡
+    // 如果差值太大，直接设置目标半径而不进行平滑过渡
     if (diff > 50000) {
         circle.setGeometries([{
             styleId: psWave,
             center: new TMap.LatLng(lat, lon),
             radius: targetRadius
         }]);
-        // console.warn("直接", psWave, diff, "当前Radius", currentRadius, "目标Radius", targetRadius);
         return;
     }
 
@@ -1383,7 +1381,9 @@ function setSmoothRadius(circle, targetRadius, lat, lon, psWave) {
     let step = diff / 60;
 
     function updateRadius() {
+        if (!circle) return;
         currentRadius += step;
+        if (!circle) return;
         circle.setGeometries([{
             styleId: psWave,
             center: new TMap.LatLng(lat, lon),
@@ -1393,16 +1393,12 @@ function setSmoothRadius(circle, targetRadius, lat, lon, psWave) {
         if (step > 0 && currentRadius < targetRadius) {
             requestAnimationFrame(updateRadius);
         } else if (step < 0 && currentRadius > targetRadius) {
-            // console.warn("什么？step居然<0？currentRadius还>targetRadius？", psWave, diff, step, "当前Radius", currentRadius,
-            // 	"目标Radius", targetRadius);
             requestAnimationFrame(updateRadius);
         }
     }
     requestAnimationFrame(updateRadius);
-    // console.log("平滑过渡", psWave, diff, step, "当前Radius", currentRadius, "目标Radius", targetRadius);
 }
 
-// 本地烈度算法 from kengwang
 function calcHomeMaxInt(震级, 距离) {
     let 本地烈度 = ((震级 * 1.363) + 2.941) - (Math.log(距离 + 7.0) * 1.494);
     // 本地烈度可视化
@@ -1410,11 +1406,8 @@ function calcHomeMaxInt(震级, 距离) {
     return 本地烈度;
 }
 
-let maxIntmarker = null;
-
-// 计算震源周围的烈度
 function locteMaxint(lon, lat, magnitude) {
-    removeInt();
+    if (maxIntmarker) destroyAndNullify(maxIntmarker, "烈度标记");
     let distanceGround = Math.exp(((magnitude * 1.363) + 2.941) / 1.494) - 7.0; // 受灾区域
     let geometries = []; // 用于存储所有标记的几何信息
 
@@ -1465,16 +1458,6 @@ function addIntToMap(geometries) {
         styles: styles,
         geometries: geometries
     });
-}
-
-function removeInt() {
-    if (maxIntmarker !== null) {
-        maxIntmarker.setMap(null);
-        maxIntmarker = null;
-        console.log("[烈度标记移除] OK");
-    } else {
-        console.log("[烈度标记移除] 第一次还没有创建不用移除 -> 移除个Der");
-    }
 }
 
 // 设置代码
@@ -1783,33 +1766,32 @@ function tts(biaoti, location, magnitude, cenc = null) {
 }
 
 async function toSimplified(text) {
-    // const url1 = `这里填繁体转简体链接?word=${encodeURIComponent(text)}`;
-    // const url2 = `这里填繁转简备用连接`;
+    // const url1 = `翻译API?word=${encodeURIComponent(text)}`;
+    // const url2 = `备用API`;
 
     // try {
-    // const response1 = await fetch(url1);
-    // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
-    // const {
-    // text: simplifiedText1
-    // } = await response1.json();
-    // return simplifiedText1;
+        // const response1 = await fetch(url1);
+        // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
+        // const {
+            // text: simplifiedText1
+        // } = await response1.json();
+        // return simplifiedText1;
     // } catch (error1) {
-    // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
-    // try {
-    // const response2 = await fetch(url2);
-    // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
-    // const {
-    // data: {
-    // convertContent: simplifiedText2
+        // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
+        // try {
+            // const response2 = await fetch(url2);
+            // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
+            // const {
+                // data: {
+                    // convertContent: simplifiedText2
+                // }
+            // } = await response2.json();
+            // return simplifiedText2;
+        // } catch (error2) {
+            // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
+            // return text;
+        // }
     // }
-    // } = await response2.json();
-    // return simplifiedText2;
-    // } catch (error2) {
-    // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
-    // return text;
-    // }
-    // }
-
-    // 有繁转简API时可以取消注释并删除下面的 return text;
+    // 翻译API自己填，填了之后取消注释就行
     return text;
 }
