@@ -11,12 +11,13 @@
 ### 准备开发的功能
 1. 设置-本地烈度触发阀值
 2. 多震适配
-3. 用[`canvas`](https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API)画地震波，而不是用官方的[`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13)，要贴合地球。
+3. 用 其他方式 画地震波，而不是用官方的[`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13)，要贴合地球。
 4. **以上还是你们来写吧**
 
 ### 存在的一些问题
 1. 腾讯地图的圆是标准的圆，并没有贴和地球，到了北边的地方没有畸变，不符合地震波传播的路径。
 2. 由于腾讯地图的圆不是贴和地球的圆，而且圆没有`getCircleBounds()`，所以`getWaveBounds()`是自行写的，地图越缩小视角的中心就越靠北。
+3. 腾讯地图的圆有最大半径限制，超过我最大的半径之后控制台就会输出经纬度不在范围内，所以 P波 或者 S波 到达了最大半径，就会停在最大半径的地方静止不动。
 
 ### 部分连接需要自己去补充
 例如[ICL API](http://www.365icl.com/index.asp)、繁转简API
