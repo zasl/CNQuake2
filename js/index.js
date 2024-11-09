@@ -1,4 +1,4 @@
-const version = "v2.0.git1104";
+const version = "v2.0.git1110";
 
 document.addEventListener("keydown", function(event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -241,29 +241,6 @@ const map = new TMap.Map("map", {
     mapStyleId: "style2"
 });
 
-function destroyAndNullify(objects, t = null) {
-    if (!objects) {
-        console.error(`[销毁] "${t}"是假的 =>`, objects);
-        return;
-    }
-
-    const isArray = Array.isArray(objects);
-    const items = isArray ? objects : [objects];
-
-    items.forEach((obj, index) => {
-        if (obj !== null) {
-            console.log(`[销毁] 开始销毁 "${t}" 中的对象 ${index} =>`, obj);
-            obj.destroy();
-            obj = null;
-            console.log(`[销毁] 对象 ${index} 已销毁 =>`, obj);
-        } else {
-            console.log(`[销毁] 对象 ${index} 已经是 null =>`, obj);
-        }
-    });
-
-    console.log(`[销毁] 已销毁 "${t}" 中的所有对象 =>`, isArray ? items : items[0]);
-}
-
 // 卫星图
 const imageTileLayer = new TMap.ImageTileLayer({
     getTileUrl: function(x, y, z) {
@@ -303,7 +280,10 @@ async function createImageTileLayer() {
     const latestTimestamp = await fetchWeatherData();
 
     if (latestTimestamp) {
-        if (rainviewerLayer) destroyAndNullify(rainviewerLayer, "降水图层");
+        if (rainviewerLayer) {
+            rainviewerLayer.destroy();
+            rainviewerLayer = null;
+        }
         // 创建新的图层
         rainviewerLayer = new TMap.ImageTileLayer({
             getTileUrl: function(x, y, z) {
@@ -328,19 +308,79 @@ createImageTileLayer();
 // 每 2 分钟更新一次图层
 setInterval(createImageTileLayer, 120000); // 2分钟
 
+const cencstyle = {
+    "cencStyle1": new TMap.MarkerStyle({
+        "width": 40,
+        "height": 40,
+        "anchor": {
+            x: 20,
+            y: 20
+        },
+        "src": "./img/history0.png"
+    }),
+    "cencStyle2": new TMap.MarkerStyle({
+        "width": 35,
+        "height": 35,
+        "anchor": {
+            x: 17.5,
+            y: 17.5
+        },
+        "src": "./img/history1.png"
+    }),
+    "cencStyle3": new TMap.MarkerStyle({
+        "width": 30,
+        "height": 30,
+        "anchor": {
+            x: 15,
+            y: 15
+        },
+        "src": "./img/historyF.png"
+    }),
+    "cencStyle": new TMap.MarkerStyle({
+        "width": 25,
+        "height": 25,
+        "anchor": {
+            x: 12.5,
+            y: 12.5
+        },
+        "src": "./img/historyT.png"
+    }),
+}
+
+const psWaveStyles = {
+    ["pWave"]: new TMap.CircleStyle({
+        "color": "rgba(41,91,255,0.16)",
+        "showBorder": true,
+        "borderColor": "rgba(41,91,255,1)",
+        "borderWidth": 3,
+    }),
+    ["sWave"]: new TMap.CircleStyle({
+        "color": "rgba(255, 165, 0, 0.16)",
+        "showBorder": true,
+        "borderColor": "rgba(255, 165, 0, 1)",
+        "borderWidth": 3,
+    }),
+    ["sWaveX"]: new TMap.CircleStyle({
+        "color": "rgba(255,0,0,0.16)",
+        "showBorder": true,
+        "borderColor": "rgba(255,0,0,1)",
+        "borderWidth": 3,
+    }),
+}
+
 let delta, cencmd51, S波倒计时, oneAudio = false,
     CurrentTime, 更新秒数, cencMarkers = null,
     maxIntmarker = null,
-    // oldTime,
     dingWern = false,
     eewBounds = false,
     scSta = false,
     twSta = false,
+    seeScDepICL = false,
     marker = null,
     epicenteral = null,
     homeMarker = null,
-    sWave = null,
-    pWave = null,
+    psWaveCircle = null,
+    currentClickHandler = null,
     cencPopups = [],
     audioCENC = new Audio("./audio/CENC update.wav"),
     timeCs = true,
@@ -629,7 +669,7 @@ async function getICLData() {
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] 1 =>", icljson);
+            console.log("[轮询ICL] FAN =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -637,7 +677,7 @@ async function getICLData() {
             }
         } else {
             // 如果第一个URL失败，则抛出错误
-            throw new Error("第一个咋没了啊");
+            throw new Error("啊，咋没了啊");
         }
     } catch (error) {
         // 捕获错误，尝试访问第二个URL
@@ -645,7 +685,7 @@ async function getICLData() {
             let response = await fetch(icurl2);
             if (response.ok) {
                 let icljson = await response.json();
-                console.log("[轮询ICL] 2 =>", icljson);
+                console.log("[轮询ICL] 访问官方 =>", icljson);
                 iclRun(icljson, "icl");
                 if (!timeCs) {
                     timeCs = true;
@@ -711,9 +751,18 @@ function iclRun(json, type) {
 $(document).ready(() => {
     getAllData();
     // setTimeout(() => {
-        // setInterval(getICLData, 5000);
+    // setInterval(getICLData, 5000);
     // }, 3000);
 });
+
+function createClickHandler(longitude, latitude) {
+    return function() {
+        map.easeTo({
+            center: new TMap.LatLng(latitude, longitude),
+            zoom: 7
+        });
+    };
+}
 
 function cencRun(json) {
     const cencmd5 = json.No1.ReportTime;
@@ -730,13 +779,6 @@ function cencRun(json) {
         }
 
         let cencGeometries = [];
-
-        const createClickHandler = (longitude, latitude) => () => {
-            map.easeTo({
-                center: new TMap.LatLng(latitude, longitude),
-                zoom: 7
-            })
-        }
 
         for (let i = 1; i <= 50; i++) {
             let listType = json[`No${i}`].type;
@@ -768,9 +810,11 @@ function cencRun(json) {
             const listTimeDisply = cencTimeDisply(listTime);
             $(`#listTime${i}`).text(listTimeDisply);
             const listBar = document.getElementById(`list_Bar${i}`);
+
             listBar.style.border = (i === 1 ? "2px solid " : "1px solid ") + thisbggcolor;
-            listBar.removeEventListener("click", createClickHandler(listLongitude, listLatitude));
-            listBar.addEventListener("click", createClickHandler(listLongitude, listLatitude));
+            if (currentClickHandler) listBar.removeEventListener("click", currentClickHandler);
+            currentClickHandler = createClickHandler(listLongitude, listLatitude);
+            listBar.addEventListener("click", currentClickHandler);
             if (i === 1) {
                 let isone;
                 $("#listType1").text(listType);
@@ -785,51 +829,12 @@ function cencRun(json) {
                     isone = false;
                     tts(null, null, null, cencShow);
                 }
-                eew("cenc", listTime, listEpicenter, parseFloat(listLatitude), parseFloat(listLongitude), parseFloat(listMagnitude), listType, null, parseFloat(listDepth), isone);
+                eew("cenc", listTime, listEpicenter, parseFloat(listLatitude), parseFloat(listLongitude), parseFloat(listMagnitude), listType, null, parseFloat(listDepth), null, isone);
             } else {
                 $(`#listType${i}`).text(`No.${i}`);
             }
         }
     }
-}
-
-const cencstyle = {
-    "cencStyle1": new TMap.MarkerStyle({
-        "width": 40,
-        "height": 40,
-        "anchor": {
-            x: 20,
-            y: 20
-        },
-        "src": "./img/history0.png"
-    }),
-    "cencStyle2": new TMap.MarkerStyle({
-        "width": 35,
-        "height": 35,
-        "anchor": {
-            x: 17.5,
-            y: 17.5
-        },
-        "src": "./img/history1.png"
-    }),
-    "cencStyle3": new TMap.MarkerStyle({
-        "width": 30,
-        "height": 30,
-        "anchor": {
-            x: 15,
-            y: 15
-        },
-        "src": "./img/historyF.png"
-    }),
-    "cencStyle": new TMap.MarkerStyle({
-        "width": 25,
-        "height": 25,
-        "anchor": {
-            x: 12.5,
-            y: 12.5
-        },
-        "src": "./img/historyT.png"
-    }),
 }
 
 function createPopupAndMarker(i, listType, listTime, listEpicenter, listLatitude, listLongitude, listMagnitude, listDepth, listMaxInt, cencGeometries, bgcolor) {
@@ -976,8 +981,13 @@ function formatDateTime(dateObj, format) {
         .replace("ss", seconds);
 }
 
+function timeaddz(time, z) {
+    // 仅匹配一个特定的wolfx时间格式 YYYY/MM/DD HH:MM:SS
+    return time.replace(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}:\d{2})/, `\$1-\$2-\$3T\$4+0${z}:00`);
+}
+
 function cencTimeDisply(cenctime) {
-    let dateObj = new Date(`${cenctime} GMT+0800`);
+    let dateObj = new Date(timeaddz(cenctime, 8));
     return formatDateTime(dateObj, "MM月DD日 hh:mm");
 }
 
@@ -1086,14 +1096,31 @@ EpicenterMarker.prototype.updateDOM = function() {
     this.dom.style.left = left;
 }
 
-let seeScDepICL = false;
+let hasExecuted = false;
+let visibilityChangeHandlerAdded = false; // 标志变量
+let eventHandler = null; // 用于存储事件处理函数
+
+function vceewcd(distance, depth, cd) {
+    if (document.visibilityState === "visible" && eewBounds) {
+        if (!hasExecuted) {
+            console.log("[预警是否在前台] 回到了前台，重新计算倒计时");
+            S波倒计时 = countdown(distance, depth, cd);
+            hasExecuted = true; // 设置标志变量为 true
+        } else {
+            console.log("[预警是否在前台] 在前台(忽略了)")
+        }
+    } else {
+        console.log("[预警是否在前台] 不在前台(在后台)");
+        hasExecuted = false; // 当页面不可见时，重置标志变量
+    }
+}
 
 // 本预警函数特地典型使用中文变量名，清晰易懂awa
 async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null, isOneCENC = true) {
-    if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") 发震时间 = new Date(发震时间 + " GMT+0800").getTime();
+    if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") 发震时间 = new Date(timeaddz(发震时间, 8)).getTime();
     if (类型 == "jma_eew" || 类型 == "jma_tw_eew") {
         let japanTime = 发震时间,
-            dateInJapan = new Date(`${japanTime} GMT+0900`);
+            dateInJapan = new Date(timeaddz(japanTime, 9));
         发震时间 = dateInJapan.getTime();
     }
     let 时差 = currentTimestamp - 发震时间;
@@ -1198,51 +1225,58 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
         clearInterval(更新秒数);
         if (scSta && twSta) toastr.warning("四川和台湾同时预警，我们不知所措");
         // 难道就真的不允许地球同时在四川和台湾地震吗？就不能多震适配吗？
-        destroyAndNullify([epicenteral, sWave, pWave], "覆盖新的预警");
+        if (epicenteral) {
+            epicenteral.destroy();
+            epicenteral = null
+        }
         locteMaxint(lon, lat, 震级);
-
-        const createCircle = (styleId1, color, borderColor, center1) => {
-            return new TMap.MultiCircle({
+        const positions = new TMap.LatLng(lat, lon),
+            S波的样式 = 震级 < 5 ? "sWave" : "sWaveX";
+        if (!psWaveCircle) {
+            psWaveCircle = new TMap.MultiCircle({
                 map,
-                styles: {
-                    [styleId1]: new TMap.CircleStyle({
-                        "color": color,
-                        "showBorder": true,
-                        "borderColor": borderColor,
-                        "borderWidth": 3,
-                    }),
-                },
+                styles: psWaveStyles,
                 geometries: [{
-                    styleId: styleId1,
-                    center: center1,
-                    radius: 1,
-                }],
+                        styleId: "pWave",
+                        center: positions,
+                        radius: 7
+                    },
+                    {
+                        styleId: S波的样式,
+                        center: positions,
+                        radius: 4
+                    }
+                ],
             });
         }
-
-        // 根据震级条件创建sWave
-        let sWaveColor = (震级 >= 5) ? "rgba(255,0,0,0.16)" : "rgba(255, 165, 0, 0.16)";
-        let sWaveBorderColor = (震级 >= 5) ? "rgba(255,0,0,1)" : "rgba(255, 165, 0, 1)";
-        sWave = createCircle("sWave", sWaveColor, sWaveBorderColor, new TMap.LatLng(lat, lon));
-
-        // 使用createCircle函数创建pWave
-        pWave = createCircle("pWave", "rgba(41,91,255,0.16)", "rgba(41,91,255,1)", new TMap.LatLng(lat, lon));
-
         epicenteral = new EpicenterMarker({
             map,
-            position: new TMap.LatLng(lat, lon)
+            position: positions
         });
 
         S波倒计时 = null;
-
+        // 在创建 setInterval 之前移除已有的监听器
+        if (eventHandler) {
+            document.removeEventListener("visibilitychange", eventHandler);
+            visibilityChangeHandlerAdded = false; // 重置标志变量
+        }
         更新秒数 = setInterval(() => {
-            let 实时时差 = currentTimestamp - 发震时间,
+            const 实时时差 = currentTimestamp - 发震时间,
                 发震时间减去秒数 = 实时时差 / 1000;
 
             if (seeScDepICL) 深度 = seeScDepICL;
+            // 添加事件监听器
+            if (!visibilityChangeHandlerAdded) {
+                eventHandler = vceewcd.bind(距离, 深度, 发震时间减去秒数);
+                document.addEventListener("visibilitychange", eventHandler);
+                visibilityChangeHandlerAdded = true; // 设置标志变量为 true
+            }
+
             S波倒计时 = S波倒计时 ? S波倒计时 - 1 : countdown(距离, 深度, 发震时间减去秒数);
-            setSmoothRadius(sWave, calcWaveDistance(false, 深度, 发震时间减去秒数) * 1000, lat, lon, "sWave");
-            setSmoothRadius(pWave, calcWaveDistance(true, 深度, 发震时间减去秒数) * 1000, lat, lon, "pWave");
+            const 计算好的P波半径 = calcWaveDistance(true, 深度, 发震时间减去秒数) * 1000,
+                计算好的S波半径 = calcWaveDistance(false, 深度, 发震时间减去秒数) * 1000;
+
+            setSmoothRadius(psWaveCircle, 计算好的P波半径, 计算好的S波半径, positions, S波的样式);
 
             if (S波倒计时 <= 0) {
                 $("#eew_countdown").text("到达");
@@ -1285,15 +1319,23 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
 
 function eewCancel() {
     $("#eew_Bar, #mapLegend").css("visibility", "hidden");
-    destroyAndNullify([maxIntmarker, epicenteral, sWave, pWave], "预警结束");
+    document.removeEventListener("visibilitychange", eventHandler);
+    clearInterval(更新秒数);
+    更新秒数 = null;
     eewBounds = false;
     twSta = false;
     scSta = false;
     seeScDepICL = false;
     S波倒计时 = null;
-    clearInterval(更新秒数);
-    更新秒数 = null;
-    setTimeout(easeTo, 500);
+    setTimeout(() => {
+        maxIntmarker.destroy();
+        epicenteral.destroy();
+        psWaveCircle.destroy();
+        maxIntmarker = null;
+        epicenteral = null;
+        psWaveCircle = null;
+    }, 1000);
+    easeTo();
 }
 
 function countdown(distance, depth, ctime) {
@@ -1358,44 +1400,66 @@ function binarySearch(arr, target) {
     return left - 1;
 }
 
-function setSmoothRadius(circle, targetRadius, lat, lon, psWave) {
-    // console.log(circle, targetRadius, lat, lon, psWave);
-    if (!circle) {
+const MAX_DIFF = 50000;
+const STEPS = 60;
+
+function setSmoothRadius(psWaveCircle, pWaveRadius, sWaveRadius, centers, sWaveStyle) {
+    if (!psWaveCircle) {
         console.log(`[平滑震波] ${psWave} 不在了 =>`, circle);
         return;
     }
-    let currentRadius = circle.getGeometries();
-    currentRadius = currentRadius[0].radius;
-    let diff = targetRadius - currentRadius;
+
+    const geometries = psWaveCircle.getGeometries();
+    let pWaveNowRadius = geometries[0].radius,
+        sWaveNowRadius = geometries[1].radius;
+
+    const diffp = pWaveRadius - pWaveNowRadius;
+    const diffs = sWaveRadius - sWaveNowRadius;
+
     // 如果差值太大，直接设置目标半径而不进行平滑过渡
-    if (diff > 50000) {
-        circle.setGeometries([{
-            styleId: psWave,
-            center: new TMap.LatLng(lat, lon),
-            radius: targetRadius
-        }]);
+    if (Math.abs(diffp) > MAX_DIFF || Math.abs(diffs) > MAX_DIFF) {
+        psWaveCircle.setGeometries([{
+                styleId: "pWave",
+                center: centers,
+                radius: pWaveRadius
+            },
+            {
+                styleId: sWaveStyle,
+                center: centers,
+                radius: sWaveRadius
+            }
+        ]);
         return;
     }
 
-    // 如果差值在可接受范围内，则进行平滑过渡
-    let step = diff / 60;
+    // 计算步长
+    const stepp = diffp / STEPS;
+    const steps = diffs / STEPS;
 
-    function updateRadius() {
-        if (!circle) return;
-        currentRadius += step;
-        if (!circle) return;
-        circle.setGeometries([{
-            styleId: psWave,
-            center: new TMap.LatLng(lat, lon),
-            radius: currentRadius
-        }]);
+    const updateRadius = () => {
+        pWaveNowRadius += stepp;
+        sWaveNowRadius += steps;
 
-        if (step > 0 && currentRadius < targetRadius) {
-            requestAnimationFrame(updateRadius);
-        } else if (step < 0 && currentRadius > targetRadius) {
+        if (psWaveCircle) {
+            psWaveCircle.setGeometries([{
+                    styleId: "pWave",
+                    center: centers,
+                    radius: pWaveNowRadius
+                },
+                {
+                    styleId: sWaveStyle,
+                    center: centers,
+                    radius: sWaveNowRadius
+                }
+            ]);
+        }
+
+        // 继续更新半径，直到达到目标半径
+        if (Math.abs(pWaveNowRadius - pWaveRadius) > Math.abs(stepp) || Math.abs(sWaveNowRadius - sWaveRadius) > Math.abs(steps)) {
             requestAnimationFrame(updateRadius);
         }
-    }
+    };
+
     requestAnimationFrame(updateRadius);
 }
 
@@ -1407,7 +1471,11 @@ function calcHomeMaxInt(震级, 距离) {
 }
 
 function locteMaxint(lon, lat, magnitude) {
-    if (maxIntmarker) destroyAndNullify(maxIntmarker, "烈度标记");
+    if (maxIntmarker) {
+        maxIntmarker.destroy();
+        maxIntmarker = null;
+    }
+
     let distanceGround = Math.exp(((magnitude * 1.363) + 2.941) / 1.494) - 7.0; // 受灾区域
     let geometries = []; // 用于存储所有标记的几何信息
 
@@ -1620,9 +1688,9 @@ function getWaveBounds(latitude, longitude, radius) {
 }
 
 function fitWaveBounds(localInt = null) {
-    let pWavelat = pWave.geometries[0].center.lat,
-        pWavelon = pWave.geometries[0].center.lng,
-        pWaveradius = pWave.geometries[0].radius,
+    let pWavelat = psWaveCircle.geometries[0].center.lat,
+        pWavelon = psWaveCircle.geometries[0].center.lng,
+        pWaveradius = psWaveCircle.geometries[0].radius,
         Bounds = getWaveBounds(pWavelat, pWavelon, pWaveradius),
         easeop = localInt > 0 ? 0 : 5000;
 
@@ -1766,8 +1834,8 @@ function tts(biaoti, location, magnitude, cenc = null) {
 }
 
 async function toSimplified(text) {
-    // const url1 = `翻译API?word=${encodeURIComponent(text)}`;
-    // const url2 = `备用API`;
+    // const url1 = `繁转简API?text=${encodeURIComponent(text)}`;
+    // const url2 = `备用繁转简api/convert/zh?content=${encodeURIComponent(text)}&type=2&app_id=pelenfiplflhdneu&app_secret=LDL7zOrcwWIEYDDNeSLUNl9uMppBShMX`;
 
     // try {
     // const response1 = await fetch(url1);
@@ -1789,9 +1857,8 @@ async function toSimplified(text) {
     // return simplifiedText2;
     // } catch (error2) {
     // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
-    // return text;
-    // }
-    // }
-    // 翻译API自己填，填了之后取消注释就行
     return text;
+    // }
+    // }
+    // 有繁转简API的话取消注释
 }
