@@ -1,4 +1,4 @@
-const version = "v2.0.git1110";
+const version = "v2.0.git1111";
 
 document.addEventListener("keydown", function(event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -887,63 +887,45 @@ function createPopupAndMarker(i, listType, listTime, listEpicenter, listLatitude
     }
 }
 
-function calcMaxInt(magnitude, depth, location = "") {
-    magnitude = Number(magnitude);
-    depth = Number(depth);
+function calcMaxInt(Magnitude, Depth, Location = null) {
+    Magnitude = Number(Magnitude);
+    Depth = Number(Depth);
 
-    // 参数配置对象
-    const params = {
-        default: {
-            a: 3.944,
-            b: 1.071,
-            c: 1.2355678010148,
-            d: 7
-        },
-        west: {
-            a: 3.6113,
-            b: 1.4347,
-            c: 1.6710348780191,
-            d: 13
-        },
-        xinjiang: {
-            a: 3.3682,
-            b: 1.2746,
-            c: 1.4383398946154,
-            d: 9
-        },
-        neijiangYibin: {
-            a: 3.6588,
-            b: 1.3626,
-            c: 1.5376630426267,
-            d: 13
+    // 定义默认常量
+    let a = 3.944,
+        b = 1.071,
+        c = 1.2355678010148,
+        d = 7;
+
+    // 特定位置的处理
+    if (Location) {
+        if (Location.includes("四川") || Location.includes("西藏") || Location.includes("青海")) {
+            a = 3.6113;
+            b = 1.4347;
+            c = 1.6710348780191;
+            d = 13;
+        } else if (Location.includes("新疆")) {
+            a = 3.3682;
+            b = 1.2746;
+            c = 1.4383398946154;
+            d = 9;
         }
-    };
 
-    // 根据地点选择参数
-    let chosenParams;
-    if (location.includes("四川") || location.includes("西藏") || location.includes("青海")) {
-        chosenParams = params.west;
-    } else if (location.includes("新疆")) {
-        chosenParams = params.xinjiang;
-    } else if (location.includes("内江市") || location.includes("宜宾市")) {
-        chosenParams = params.neijiangYibin;
-    } else {
-        chosenParams = params.default;
+        // 针对特定城市的额外调整
+        if (Location.includes("内江市") || Location.includes("宜宾市")) {
+            a = 3.6588;
+            b = 1.3626;
+            c = 1.5376630426267;
+            d = 13;
+        }
     }
 
-    // 计算最大强度
-    const {
-        a,
-        b,
-        c,
-        d
-    } = chosenParams;
-    let maxInt = a + b * magnitude - c * Math.log(d * (depth + 25) / 40) + 0.2;
+    // 计算最大烈度
+    const logTerm = Math.log(d * (Depth + 25) / 40),
+        maxInt = (a + b * Magnitude - c * logTerm + 0.2).toFixed(1);
 
-    // 唉嘿
-    return maxInt.toFixed(1);
-    // 返回结果，向下取整
-    // return Math.floor(maxInt);
+    // Math.floor();
+    return maxInt;
 }
 
 function Rad(d) {
