@@ -1,4 +1,4 @@
-const version = "v2.0.git1111";
+const version = "v2.0.git1117";
 
 document.addEventListener("keydown", function(event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -368,6 +368,10 @@ const psWaveStyles = {
     }),
 }
 
+const converter = OpenCC.Converter({
+    from: "tw",
+    to: "cn"
+});
 let delta, cencmd51, S波倒计时, oneAudio = false,
     CurrentTime, 更新秒数, cencMarkers = null,
     maxIntmarker = null,
@@ -661,15 +665,16 @@ function justTimeColor() {
 }
 
 const icurl2 = `ICL API`;
-
+// 官方备用链接 由于ICL要求，因此不提供
 async function getICLData() {
-    const icurl1 = `备用ICL API?${currentTimestamp}`;
+    // 自定义ICL链接
+    const icurl1 = `ICU.php?${currentTimestamp}`;
     try {
         // 尝试访问第一个URL
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] FAN =>", icljson);
+            console.log("[轮询ICL] 1 =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -693,11 +698,11 @@ async function getICLData() {
                 }
             } else {
                 // 如果第二个URL也失败，则处理错误或抛出异常
-                console.error("[轮询ICL] 1 -> 不是网络问题就是出事了");
+                console.error("[轮询ICL] 1 -> 不是网络问题就是官方出事了");
             }
         } catch (error) {
             // 如果第二个请求也失败，则处理错误
-            console.error("[轮询ICL] 2 -> 那就是不是网络问题就是出事了 =>", error);
+            console.error("[轮询ICL] 2 -> 那就是不是网络问题就是官方出事了 =>", error);
             if (timeCs) {
                 timeCs = false;
                 justTimeColor();
@@ -753,6 +758,7 @@ $(document).ready(() => {
     // setTimeout(() => {
     // setInterval(getICLData, 5000);
     // }, 3000);
+    // 如果你有ICL API，删除注释以启用ICL
 });
 
 function createClickHandler(longitude, latitude) {
@@ -1098,7 +1104,7 @@ function vceewcd(distance, depth, cd) {
 }
 
 // 本预警函数特地典型使用中文变量名，清晰易懂awa
-async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null, isOneCENC = true) {
+function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null, isOneCENC = true) {
     if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") 发震时间 = new Date(timeaddz(发震时间, 8)).getTime();
     if (类型 == "jma_eew" || 类型 == "jma_tw_eew") {
         let japanTime = 发震时间,
@@ -1120,10 +1126,8 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
             return;
         }
 
-        eewBounds = true;
-
         震级 = 震级.toFixed(1);
-        if (类型 == "cwa_eew") 震中 = "台湾" + await toSimplified(震中);
+        if (类型 == "cwa_eew") 震中 = "台湾" + converter(震中);
         if (类型 == "fj_eew" && 震中.length > 10) 震中 = 震中.replace("附近海域", "近海");
         let 距离 = getDistance(lat, lon, homeLat, homeLon),
             本地烈度 = calcHomeMaxInt(震级, 距离),
@@ -1146,7 +1150,7 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
                 break;
             case "icl":
                 sourceText = `中国地震预警网 第${多少报}报`;
-                playAudio("更新");
+                playAudio(eewBounds ? "更新" : "alert");
                 break;
             case "cenc":
                 sourceText = `中国地震台网 ${多少报}`;
@@ -1237,6 +1241,7 @@ async function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, �
         });
 
         S波倒计时 = null;
+        eewBounds = true;
         // 在创建 setInterval 之前移除已有的监听器
         if (eventHandler) {
             document.removeEventListener("visibilitychange", eventHandler);
@@ -1813,34 +1818,4 @@ function tts(biaoti, location, magnitude, cenc = null) {
         isSpeaking = false;
     };
     window.speechSynthesis.speak(utterance);
-}
-
-async function toSimplified(text) {
-    // const url1 = `繁转简API?text=${encodeURIComponent(text)}`;
-    // const url2 = `备用繁转简api/convert/zh?content=${encodeURIComponent(text)}&type=2&app_id=pelenfiplflhdneu&app_secret=LDL7zOrcwWIEYDDNeSLUNl9uMppBShMX`;
-
-    // try {
-    // const response1 = await fetch(url1);
-    // if (!response1.ok) throw new Error(`[繁转简API] HTTP错误！状态 => ${response1.status}`);
-    // const {
-    // text: simplifiedText1
-    // } = await response1.json();
-    // return simplifiedText1;
-    // } catch (error1) {
-    // console.error("[繁转简API] 第一个API获取简体文本时出错 =>", error1);
-    // try {
-    // const response2 = await fetch(url2);
-    // if (!response2.ok) throw new Error(`[繁转简API] 第二个API HTTP错误！状态 => ${response2.status}`);
-    // const {
-    // data: {
-    // convertContent: simplifiedText2
-    // }
-    // } = await response2.json();
-    // return simplifiedText2;
-    // } catch (error2) {
-    // console.error("[繁转简API] 第二个API获取简体文本时出错 =>", error2);
-    return text;
-    // }
-    // }
-    // 有繁转简API的话取消注释
 }
