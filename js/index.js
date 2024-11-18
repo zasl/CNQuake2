@@ -1,4 +1,7 @@
-const version = "v2.0.git1117";
+const version = "v2.0.241119";
+const iclOA = "https://mobile-new.chinaeew.cn/v1/earlywarnings?updates&start_at&rts=";
+// 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
+const iclOL = "https://api.fanstudio.tech/eq/icl_only.php?";
 
 document.addEventListener("keydown", function(event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -664,17 +667,14 @@ function justTimeColor() {
     $("#serverTime").css("color", timeCs ? "white" : "#f51c15");
 }
 
-const icurl2 = `ICL API`;
-// 官方备用链接 由于ICL要求，因此不提供
 async function getICLData() {
-    // 自定义ICL链接
-    const icurl1 = `ICU.php?${currentTimestamp}`;
+    const icurl1 = iclOL + currentTimestamp;
     try {
         // 尝试访问第一个URL
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] 1 =>", icljson);
+            console.log("[轮询ICL] FAN =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -682,10 +682,11 @@ async function getICLData() {
             }
         } else {
             // 如果第一个URL失败，则抛出错误
-            throw new Error("啊，咋没了啊");
+            throw new Error("咦？第一不行，推动完整");
         }
     } catch (error) {
         // 捕获错误，尝试访问第二个URL
+        const icurl2 = iclOA + currentTimestamp;
         try {
             let response = await fetch(icurl2);
             if (response.ok) {
@@ -755,142 +756,159 @@ function iclRun(json, type) {
 
 $(document).ready(() => {
     getAllData();
-    // setTimeout(() => {
-    // setInterval(getICLData, 5000);
-    // }, 3000);
-    // 如果你有ICL API，删除注释以启用ICL
+    if (iclOA || iclOL) {
+        setTimeout(() => {
+            setInterval(getICLData, 5000);
+        }, 3000);
+    } else {
+        console.warn("未启用ICL");
+    }
 });
 
-function createClickHandler(longitude, latitude) {
-    return function() {
-        map.easeTo({
-            center: new TMap.LatLng(latitude, longitude),
-            zoom: 7
-        });
-    };
-}
+const clickHandlers = {};
 
 function cencRun(json) {
     const cencmd5 = json.No1.ReportTime;
     if (cencmd5 !== cencmd51) {
         cencmd51 = cencmd5;
 
-        if (cencMarkers !== null) {
+        // 清除旧的标记和弹窗
+        if (cencMarkers) {
             cencMarkers.setMap(null);
             cencMarkers = null;
-            for (i = 0; i < 50; i++) {
-                cencPopups[i].destroy()
-            }
+            cencPopups.forEach(popup => popup.destroy());
             cencPopups = [];
         }
 
-        let cencGeometries = [];
+        const cencGeometries = [];
 
         for (let i = 1; i <= 50; i++) {
-            let listType = json[`No${i}`].type;
-            const listDepth = json[`No${i}`].depth;
-            const listEpicenter = json[`No${i}`].location;
-            const listMagnitude = json[`No${i}`].magnitude;
-            const listLatitude = json[`No${i}`].latitude;
-            const listLongitude = json[`No${i}`].longitude;
-            const listTime = json[`No${i}`].time;
-            const listMaxInt = calcMaxInt(listMagnitude, listDepth, listEpicenter);
+            const data = json[`No${i}`];
+            const {
+                type,
+                depth,
+                location,
+                magnitude,
+                latitude,
+                longitude,
+                time
+            } = data;
+            const listMaxInt = calcMaxInt(magnitude, depth, location);
             const listMaxInt2 = Math.floor(listMaxInt);
-            const listDistance = Math.floor(getDistance(listLatitude, listLongitude, homeLat, homeLon));
-            listType = listType === "automatic" ? "自动测定" : "正式测定";
+            const listDistance = Math.floor(getDistance(latitude, longitude, homeLat, homeLon));
+            const listType = type === "automatic" ? "自动测定" : "正式测定";
 
-            calclistEpicenterTopSize(listEpicenter, i);
+            calclistEpicenterTopSize(location, i);
             $(`#listDistance${i}`).text(`${listDistance}km`);
-            $(`#listDepth${i}`).text(`深度:${listDepth}km`);
-            $(`#listEpicenter${i}`).text(listEpicenter);
-            const magColor = listMagnitude < 3.5 ? "#B2D4F2" : listMagnitude < 4 ? "#4fa6f3" : listMagnitude < 5 ? "#fec118" : listMagnitude < 6 ? "#fb8a23" : "#f7455c";
-            $(`#listMagnitude${i}`).text(`M${listMagnitude}`).css("color", magColor);
+            $(`#listDepth${i}`).text(`深度:${depth}km`);
+            $(`#listEpicenter${i}`).text(location);
+            const magColor = getMagnitudeColor(magnitude);
+            $(`#listMagnitude${i}`).text(`M${magnitude}`).css("color", magColor);
             const thisbggcolor = intColor[listMaxInt2].oright;
             $(`#listMaxInt${i}`).text(listMaxInt2).css({
                 "background-color": intColor[listMaxInt2].backgroundColor,
                 "color": intColor[listMaxInt2].color,
                 "border": `1px solid ${thisbggcolor}`
             });
-            createPopupAndMarker(i, listType, listTime, listEpicenter, listLatitude, listLongitude, listMagnitude, listDepth, listMaxInt, cencGeometries, thisbggcolor);
-
-            const listTimeDisply = cencTimeDisply(listTime);
+            const listTimeDisply = cencTimeDisply(time);
             $(`#listTime${i}`).text(listTimeDisply);
             const listBar = document.getElementById(`list_Bar${i}`);
 
             listBar.style.border = (i === 1 ? "2px solid " : "1px solid ") + thisbggcolor;
-            if (currentClickHandler) listBar.removeEventListener("click", currentClickHandler);
-            currentClickHandler = createClickHandler(listLongitude, listLatitude);
-            listBar.addEventListener("click", currentClickHandler);
+            if (clickHandlers[`No${i}`]) listBar.removeEventListener("click", clickHandlers[`No${i}`]);
+            clickHandlers[`No${i}`] = createClickHandler(new TMap.LatLng(latitude, longitude));
+            listBar.addEventListener("click", clickHandlers[`No${i}`]);
+
             if (i === 1) {
-                let isone;
-                $("#listType1").text(listType);
-                if (!oneAudio) {
-                    oneAudio = true;
-                    isone = true;
-                    showCustomNotification("通知已开启", "如果看到此信息，表明预警信息推送已开启。");
-                } else {
-                    audioCENC.play();
-                    let cencShow = `中国地震台网${listType}: ${listTimeDisply} 在 ${listEpicenter} 发生${listMagnitude}级地震，震源深度${listDepth}km，预估最大烈度${listMaxInt}度`;
-                    showCustomNotification("地震信息", cencShow);
-                    isone = false;
-                    tts(null, null, null, cencShow);
-                }
-                eew("cenc", listTime, listEpicenter, parseFloat(listLatitude), parseFloat(listLongitude), parseFloat(listMagnitude), listType, null, parseFloat(listDepth), null, isone);
+                handleFirstItem(listType, time, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt);
             } else {
                 $(`#listType${i}`).text(`No.${i}`);
+            }
+
+            const popup = createPopup(i, thisbggcolor, listType, time, location, latitude, longitude, magnitude, depth, listMaxInt);
+            cencPopups.push(popup);
+
+            const cencGeo = {
+                "id": `cencMarker_${i}`,
+                "styleId": `cencStyle${i <= 3 ? i : ""}`,
+                "position": new TMap.LatLng(latitude, longitude),
+                "properties": {
+                    "title": "cencMarker"
+                }
+            };
+            cencGeometries.push(cencGeo);
+
+            if (i === 50) {
+                cencMarkers = new TMap.MultiMarker({
+                    map: map,
+                    styles: cencstyle,
+                    geometries: cencGeometries
+                }).on("click", function(e) {
+                    const index = cencGeometries.findIndex(g => g.id === e.geometry.id);
+                    if (index !== -1) {
+                        cencPopups[index].open();
+                    }
+                });
             }
         }
     }
 }
 
-function createPopupAndMarker(i, listType, listTime, listEpicenter, listLatitude, listLongitude, listMagnitude, listDepth, listMaxInt, cencGeometries, bgcolor) {
-    let popup = new TMap.InfoWindow({
+function createClickHandler(listCoor) {
+    return function() {
+        map.easeTo({
+            center: listCoor,
+            zoom: 7
+        });
+    };
+}
+
+function getMagnitudeColor(magnitude) {
+    if (magnitude < 3.5) return "#B2D4F2";
+    if (magnitude < 4) return "#4fa6f3";
+    if (magnitude < 5) return "#fec118";
+    if (magnitude < 6) return "#fb8a23";
+    return "#f7455c";
+}
+
+function handleFirstItem(listType, listTime, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt) {
+    $("#listType1").text(listType);
+    if (!oneAudio) {
+        oneAudio = true;
+        showCustomNotification("通知已开启", "如果看到此信息，表明预警信息推送已开启。");
+    } else {
+        audioCENC.play();
+        const cencShow = `中国地震台网${listType}: ${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
+        showCustomNotification("地震信息", cencShow);
+        tts(null, null, null, cencShow);
+    }
+    eew("cenc", listTime, location, parseFloat(latitude), parseFloat(longitude), parseFloat(magnitude), listType, null, parseFloat(depth), null, !oneAudio);
+}
+
+function createPopup(i, thisbggcolor, listType, time, location, latitude, longitude, magnitude, depth, listMaxInt) {
+    const popup = new TMap.InfoWindow({
         map: map,
         enableCustom: true,
-        position: new TMap.LatLng(listLatitude, listLongitude),
+        position: new TMap.LatLng(latitude, longitude),
         offset: {
             x: 0,
             y: -15
         },
         content: `
-            <div class="popup-content" style="border: 2px solid ${bgcolor}">
-		        <div style="text-align: center; font-size: 18px; padding-top: 16px;">中国地震台网 ${listType}${i > 1 ? "#" + i : "⚡"}</div>
-		        <p>时间：${listTime}</p>
-		        <p>震中：${listEpicenter}</p>
-		        <p>纬度：${listLatitude}</p>
-		        <p>经度：${listLongitude}</p>
-		        <p>震级：${listMagnitude} 级</p>
-		        <p>深度：${listDepth} km</p>
-		        <p>预估最大烈度：${listMaxInt}</p>
-	        </div>
-	    `
+            <div class="popup-content" style="border: 2px solid ${thisbggcolor}">
+                <div style="text-align: center; font-size: 18px; padding-top: 16px;">中国地震台网 ${listType}${i > 1 ? "#" + i : "⚡"}</div>
+                <p>时间：${time}</p>
+                <p>震中：${location}</p>
+                <p>纬度：${latitude}</p>
+                <p>经度：${longitude}</p>
+                <p>震级：${magnitude} 级</p>
+                <p>深度：${depth} km</p>
+                <p>预估最大烈度：${listMaxInt}</p>
+            </div>
+        `
     });
     popup.close();
-
-    let cencGeo = {
-        "id": "cencMarker_" + i,
-        "styleId": "cencStyle" + (i <= 3 ? i : ""),
-        "position": new TMap.LatLng(listLatitude, listLongitude),
-        "properties": {
-            "title": "cencMarker"
-        }
-    };
-
-    cencGeometries.push(cencGeo);
-    cencPopups.push(popup);
-
-    if (i == 50) {
-        cencMarkers = new TMap.MultiMarker({
-            map: map,
-            styles: cencstyle,
-            geometries: cencGeometries
-        }).on("click", function(e) {
-            let index = cencGeometries.findIndex(g => g.id === e.geometry.id);
-            if (index !== -1) {
-                cencPopups[index].open();
-            }
-        });
-    }
+    return popup;
 }
 
 function calcMaxInt(Magnitude, Depth, Location = null) {
