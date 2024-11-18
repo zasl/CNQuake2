@@ -730,7 +730,6 @@ function iclRun(json, type) {
         }
     };
 
-    // 根据类型处理不同的数据
     if (type == "bot") processData(json.Data);
     else if (type == "icl") processData(json.data[0]);
     else console.error("[执行ICL] 类型不对？不可能吧？");
@@ -920,7 +919,6 @@ function calcMaxInt(Magnitude, Depth, Location = null) {
     const logTerm = Math.log(d * (Depth + 25) / 40),
         maxInt = (a + b * Magnitude - c * logTerm + 0.2).toFixed(1);
 
-    // Math.floor();
     return maxInt;
 }
 
