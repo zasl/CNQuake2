@@ -235,8 +235,6 @@ const intColor = {
     }
 };
 
-// toastr.options.positionClass = "toast-bottom-left";
-
 //初始化地图
 const map = new TMap.Map("map", {
     center: new TMap.LatLng(37.093496518166944, 107.79942839007867), //设置中心点坐标
@@ -505,9 +503,7 @@ class HEQC {
         }
         // 根据深度计算索引i，如果i大于6，则i设为6
         let i = Math.floor(depth / 5.0); // 假设深度为10 10/5=2 i=2
-        if (i > 6) {
-            i = 6;
-        }
+        if (i > 6) i = 6;
         // 获取数组ARRAY，并根据i获取对应的两个数组fArr2和fArr3
         let fArr = this.ARRAY;
         let i2 = 0;
@@ -515,17 +511,11 @@ class HEQC {
         let fArr3 = fArr[i + 1]; // 假设为2+1=3
         let length = fArr2.length - 1; // 总数？
         // 如果距离大于fArr2的最后一个元素，则使用斜率和截距计算倒计时
-        if (distance > fArr2[length]) {
-            return (this.SLOPE[i] * distance) + this.INTERCEPT[i];
-        }
+        if (distance > fArr2[length]) return (this.SLOPE[i] * distance) + this.INTERCEPT[i];
         // 如果距离与fArr2的最后一个元素之差小于0，则返回fArr3的最后一个元素
-        if (Math.abs(distance - fArr2[length]) < 0.0) {
-            return fArr3[length];
-        }
+        if (Math.abs(distance - fArr2[length]) < 0.0) return fArr3[length];
         // 循环查找距离在fArr2中的位置
-        while (i2 < length && distance >= fArr2[i2]) {
-            i2++;
-        }
+        while (i2 < length && distance >= fArr2[i2]) i2++;
         let i3 = i2 - 1;
         let i4 = i3 + 1;
         // 使用线性插值计算倒计时
@@ -646,9 +636,7 @@ async function getAllData() {
             }
         }
 
-        if (json.type == "cenc_eqlist") {
-            cencRun(json);
-        }
+        if (json.type == "cenc_eqlist") cencRun(json);
     });
 
     socket.addEventListener("error", (allError) => {
@@ -663,9 +651,7 @@ async function getAllData() {
     });
 }
 
-function justTimeColor() {
-    $("#serverTime").css("color", timeCs ? "white" : "#f51c15");
-}
+const justTimeColor = () => $("#serverTime").css("color", timeCs ? "white" : "#f51c15");
 
 async function getICLData() {
     const icurl1 = iclOL + currentTimestamp;
@@ -745,28 +731,19 @@ function iclRun(json, type) {
     };
 
     // 根据类型处理不同的数据
-    if (type == "bot") {
-        processData(json.Data); // 如果是"bot"类型，处理Data属性
-    } else if (type == "icl") {
-        processData(json.data[0]); // 如果是"icl"类型，处理data数组的第一个元素
-    } else {
-        console.error("[执行ICL] 类型不对？不可能吧？");
-    }
+    if (type == "bot") processData(json.Data);
+    else if (type == "icl") processData(json.data[0]);
+    else console.error("[执行ICL] 类型不对？不可能吧？");
 }
 
 $(document).ready(() => {
     getAllData();
-    if (iclOA || iclOL) {
-        setTimeout(() => {
-            setInterval(getICLData, 5000);
-        }, 3000);
-    } else {
-        console.warn("未启用ICL");
-    }
+    if (iclOA || iclOL) startICLDataFetching();
+    else console.warn("未启用ICL");
 });
+const startICLDataFetching = () => setTimeout(() => setInterval(getICLData, 5000), 3000);
 
 const clickHandlers = {};
-
 function cencRun(json) {
     const cencmd5 = json.No1.ReportTime;
     if (cencmd5 !== cencmd51) {
@@ -819,11 +796,8 @@ function cencRun(json) {
             clickHandlers[`No${i}`] = createClickHandler(new TMap.LatLng(latitude, longitude));
             listBar.addEventListener("click", clickHandlers[`No${i}`]);
 
-            if (i === 1) {
-                handleFirstItem(listType, time, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt);
-            } else {
-                $(`#listType${i}`).text(`No.${i}`);
-            }
+            if (i === 1) handleFirstItem(listType, time, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt);
+            else $(`#listType${i}`).text(`No.${i}`);
 
             const popup = createPopup(i, thisbggcolor, listType, time, location, latitude, longitude, magnitude, depth, listMaxInt);
             cencPopups.push(popup);
@@ -845,9 +819,7 @@ function cencRun(json) {
                     geometries: cencGeometries
                 }).on("click", function(e) {
                     const index = cencGeometries.findIndex(g => g.id === e.geometry.id);
-                    if (index !== -1) {
-                        cencPopups[index].open();
-                    }
+                    if (index !== -1) cencPopups[index].open();
                 });
             }
         }
@@ -1039,11 +1011,9 @@ function easeTo() {
     }
 }
 
-function closeCencPopups() {
-    for (i = 0; i < 50; i++) {
-        cencPopups[i].close();
-    }
-}
+const closeCencPopups = () => {
+    for (i = 0; i < 50; i++) cencPopups[i].close();
+};
 
 function eewToastr(warn, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP) {
     timeJP = eewTimeDisplay("bf_eew", timeJP);
@@ -1313,7 +1283,11 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
 
         $("#eew_Bar, #mapLegend").css("visibility", "visible");
         if (本地烈度 > 0) addHomeToMap();
-        if (isOneCENC) tts(sourceText, 震中, 震级);
+        S波倒计时 = countdown(距离, 深度, 时差 / 1000);
+        $("#eew_countdown").text(S波倒计时);
+        if (isOneCENC && (本地烈度 == 0 || S波倒计时 >= 30)) tts(sourceText, 震中, 震级);
+        else if (isOneCENC && S波倒计时 > 0) toastr.warning("时间紧迫，请立即采取措施！", "请注意");
+        S波倒计时 = null;
         setTimeout(() => fitWaveBounds(本地烈度), 1000);
     } else {
         类型 == "icl" ?
@@ -1392,13 +1366,9 @@ function binarySearch(arr, target) {
 
     while (left <= right) {
         const mid = Math.floor((left + right) / 2);
-        if (arr[mid] === target) {
-            return mid;
-        } else if (arr[mid] < target) {
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
+        if (arr[mid] === target) return mid;
+        else if (arr[mid] < target) left = mid + 1;
+        else right = mid - 1;
     }
 
     // 返回最接近但不超过目标值的索引
@@ -1494,9 +1464,7 @@ function locteMaxint(lon, lat, magnitude) {
         }
     }
 
-    if (geometries.length > 0) {
-        addIntToMap(geometries);
-    }
+    if (geometries.length > 0) addIntToMap(geometries);
 }
 
 function createGeometry(Longround, Latground, magnitude, groundDistance) {
@@ -1551,11 +1519,8 @@ settingsIcon.addEventListener("click", function() {
     // 淡入效果
     overlay.style.opacity = "0";
     let fadeEffect = setInterval(function() {
-        if (overlay.style.opacity < 1) {
-            overlay.style.opacity = parseFloat(overlay.style.opacity) + 0.1;
-        } else {
-            clearInterval(fadeEffect);
-        }
+        if (overlay.style.opacity < 1) overlay.style.opacity = parseFloat(overlay.style.opacity) + 0.1;
+        else clearInterval(fadeEffect);
     }, 50);
 
     // 获取本地存储的设置值
@@ -1769,13 +1734,9 @@ function playAudio(number) {
 
     let numberStr = number.toString();
 
-    if (numberStr.length === 1) {
-        playSingleDigit(numberStr);
-    } else if (numberStr.length === 2 || numberStr === "100") {
-        playTwoDigits(numberStr);
-    } else {
-        console.error(`[音频播放] 发生了不可能发生的错误 -> 怎么回事？`);
-    }
+    if (numberStr.length === 1) playSingleDigit(numberStr);
+    else if (numberStr.length === 2 || numberStr === "100") playTwoDigits(numberStr);
+    else console.error(`[音频播放] 发生了不可能发生的错误 -> 怎么回事？`);
 }
 
 function playAudioFile(audioFile) {
@@ -1795,17 +1756,11 @@ function playTwoDigits(numberStr) {
     const number = parseInt(numberStr, 10);
 
     if (number >= 10 && number < 30) {
-        if (number % 2 === 0) {
-            playAudioFile(digitAudioFiles[numberStr]);
-        } else if (dingWern) {
-            playWarningAudio(dingWern);
-        }
+        if (number % 2 === 0) playAudioFile(digitAudioFiles[numberStr]);
+        else if (dingWern) playWarningAudio(dingWern);
     } else if (number >= 30) {
-        if (number % 10 === 0) {
-            playAudioFile(digitAudioFiles[numberStr]);
-        } else if (dingWern) {
-            dingWernTts();
-        }
+        if (number % 10 === 0) playAudioFile(digitAudioFiles[numberStr]);
+        else if (dingWern) dingWernTts();
     } else {
         console.error(`[音频播放-双数字] 未找到数字 ${digit} 的音频文件。`);
     }
@@ -1823,9 +1778,7 @@ function dingWernTts() {
         "红色预警": "严重破坏性地震，请紧急避险"
     };
 
-    if (messages[dingWern]) {
-        tts(null, null, null, messages[dingWern]);
-    }
+    if (messages[dingWern]) tts(null, null, null, messages[dingWern]);
 }
 
 function tts(biaoti, location, magnitude, cenc = null) {
