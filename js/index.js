@@ -1,7 +1,7 @@
-const version = "v2.0.241119";
-const iclOA = "https://mobile-new.chinaeew.cn/v1/earlywarnings?updates&start_at&rts=";
+const version = "v2.0.git1119";
+const iclOA = "";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
-const iclOL = "https://api.fanstudio.tech/eq/icl_only.php?";
+const iclOL = "";
 
 document.addEventListener("keydown", function(event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -660,7 +660,7 @@ async function getICLData() {
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] FAN =>", icljson);
+            console.log("[轮询ICL] 第一 =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
