@@ -1,9 +1,9 @@
-const version = "v2.0.git1119";
+const version = "v2.0.git1130";
 const iclOA = "";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
 const iclOL = "";
 
-document.addEventListener("keydown", function(event) {
+document.addEventListener("keydown", function (event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
     if (
         event.key === "F12" ||
@@ -244,7 +244,7 @@ const map = new TMap.Map("map", {
 
 // 卫星图
 const imageTileLayer = new TMap.ImageTileLayer({
-    getTileUrl: function(x, y, z) {
+    getTileUrl: function (x, y, z) {
         return "https://bgn1.gpstool.com/maps/vt?lyrs=s&v=982&gl=cn&x=" + x + "&y=" + y + "&z=" + z;
     },
     tileSize: 256,
@@ -287,7 +287,7 @@ async function createImageTileLayer() {
         }
         // 创建新的图层
         rainviewerLayer = new TMap.ImageTileLayer({
-            getTileUrl: function(x, y, z) {
+            getTileUrl: function (x, y, z) {
                 let url = "https://tilecache.rainviewer.com/v2/radar/" + latestTimestamp + "/512/" + z + "/" + x + "/" + y + "/4/1_1.png";
                 return url;
             },
@@ -390,7 +390,7 @@ let delta, cencmd51, S波倒计时, oneAudio = false,
     audioCENC = new Audio("./audio/CENC update.wav"),
     timeCs = true,
     currentTimestamp;
-const warnJPcenters = ["台湾付近", "与那国島近海", "石垣島北西沖", "石垣島南方沖", "西表島付近", "石垣島近海"];
+const warnJPcenters = ["台湾付近", "与那国島近海", "石垣島北西沖", "石垣島南方沖", "西表島付近", "石垣島近海", "宮古島近海"];
 
 class HEQC {
     static SLOPE = [0.23335281, 0.23347212, 0.23335606, 0.23335613, 0.23335539, 0.23335367, 0.23335291];
@@ -538,6 +538,7 @@ async function getAllData() {
             socket.send("query_cwaeew");
             socket.send("query_fjeew");
             socket.send("query_sceew");
+            socket.send("query_jmaeew");
         }, 2000)
 
     });
@@ -624,9 +625,9 @@ async function getAllData() {
                     eewCancel();
                 }
             } else if (warnJPcenters.includes(centerJP)) {
-                centerJP = "中国台湾附近";
+                centerJP = centerJP == "宮古島近海" ? "琉球群岛附近" : "中国台湾附近";
                 eew("jma_tw_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
-                eewToastr(true, null, centerJP, null, null, null, null, depJP, null, null, null, null);
+                eewToastr(true, timeJP, centerJP, null, null, null, null, depJP, null, null, null, null);
                 if (isCancelJP) {
                     eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
                     eewCancel();
@@ -660,7 +661,7 @@ async function getICLData() {
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] 第一 =>", icljson);
+            console.log("[轮询ICL] FAN =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -730,6 +731,7 @@ function iclRun(json, type) {
         }
     };
 
+    // 根据类型处理不同的数据
     if (type == "bot") processData(json.Data);
     else if (type == "icl") processData(json.data[0]);
     else console.error("[执行ICL] 类型不对？不可能吧？");
@@ -784,7 +786,7 @@ function cencRun(json) {
             $(`#listMaxInt${i}`).text(listMaxInt2).css({
                 "background-color": intColor[listMaxInt2].backgroundColor,
                 "color": intColor[listMaxInt2].color,
-                "border": `1px solid ${thisbggcolor}`
+                "border": `3px solid ${thisbggcolor}`
             });
             const listTimeDisply = cencTimeDisply(time);
             $(`#listTime${i}`).text(listTimeDisply);
@@ -816,7 +818,7 @@ function cencRun(json) {
                     map: map,
                     styles: cencstyle,
                     geometries: cencGeometries
-                }).on("click", function(e) {
+                }).on("click", function (e) {
                     const index = cencGeometries.findIndex(g => g.id === e.geometry.id);
                     if (index !== -1) cencPopups[index].open();
                 });
@@ -826,7 +828,7 @@ function cencRun(json) {
 }
 
 function createClickHandler(listCoor) {
-    return function() {
+    return function () {
         map.easeTo({
             center: listCoor,
             zoom: 7
@@ -919,6 +921,7 @@ function calcMaxInt(Magnitude, Depth, Location = null) {
     const logTerm = Math.log(d * (Depth + 25) / 40),
         maxInt = (a + b * Magnitude - c * logTerm + 0.2).toFixed(1);
 
+    // Math.floor();
     return maxInt;
 }
 
@@ -1014,13 +1017,15 @@ const closeCencPopups = () => {
 };
 
 function eewToastr(warn, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP) {
+    timeJP = new Date(timeaddz(timeJP, 9)).getTime();
+    if (currentTimestamp - timeJP > 300000) return;
     timeJP = eewTimeDisplay("bf_eew", timeJP);
 
     if (!warn) {
         const reportType = isFinalJP ? `最终第${whatbaoJP}报` : isCancelJP ? `取消第${whatbaoJP}报` : `第${whatbaoJP}报`;
         const message = `
             ${biaotiJP} ${reportType}<br>
-            ${timeJP}(UTC+9)发生<br>
+            ${timeJP} 发生<br>
             震中: ${centerJP}（${latJP}, ${lonJP}）<br>
             震级: M${zhenjiJP}<br>
             深度: ${depJP}km<br>
@@ -1042,12 +1047,12 @@ function EpicenterMarker(options) {
 EpicenterMarker.prototype = new TMap.DOMOverlay();
 
 // 初始化
-EpicenterMarker.prototype.onInit = function(options) {
+EpicenterMarker.prototype.onInit = function (options) {
     this.position = options.position;
 }
 
 // 创建
-EpicenterMarker.prototype.createDOM = function() {
+EpicenterMarker.prototype.createDOM = function () {
     epicenterDom = document.createElement("img"); // 新建一个img的dom
     epicenterDom.src = "./img/Source-Copy.png";
     epicenterDom.style.cssText = `
@@ -1060,7 +1065,7 @@ EpicenterMarker.prototype.createDOM = function() {
 }
 
 // 更新DOM元素，在地图移动/缩放后执行
-EpicenterMarker.prototype.updateDOM = function() {
+EpicenterMarker.prototype.updateDOM = function () {
     if (!this.map) return; // 我缩写成了一行
     let pixel = this.map.projectToContainer(this.position); // 经纬度坐标转容器像素坐标
     let left = pixel.getX() - this.dom.clientWidth / 2 + "px";
@@ -1092,15 +1097,11 @@ function vceewcd(distance, depth, cd) {
 // 本预警函数特地典型使用中文变量名，清晰易懂awa
 function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null, isOneCENC = true) {
     if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") 发震时间 = new Date(timeaddz(发震时间, 8)).getTime();
-    if (类型 == "jma_eew" || 类型 == "jma_tw_eew") {
-        let japanTime = 发震时间,
-            dateInJapan = new Date(timeaddz(japanTime, 9));
-        发震时间 = dateInJapan.getTime();
-    }
+    else if (类型 == "jma_eew" || 类型 == "jma_tw_eew") 发震时间 = new Date(timeaddz(发震时间, 9)).getTime();
     let 时差 = currentTimestamp - 发震时间;
     console.log(`[eew] 时差 => ${时差}`);
 
-    if (时差 <= 300000) {
+    if (时差 <= 300000 || eewBounds) {
         if (类型 == "icl" && scSta || 类型 == "icl" && twSta) {
             console.log(`[eew] 省地震局正在预警，ICL无需插手 => ${类型} ${震中} ${深度}km`);
             if (scSta) {
@@ -1162,35 +1163,36 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
         const 信息2 = (类型 == "fj_eew" || 类型 == "sc_eew") ?
             "震中烈度" + 最大烈度 + "度" :
             (类型 == "jma_eew" || 类型 == "jma_tw_eew") ?
-            "最大震度" + 最大烈度 :
-            "震源深度" + 深度.toFixed(0) + "km";
+                "最大震度" + 最大烈度 :
+                "震源深度" + 深度.toFixed(0) + "km",
+            size = 震中.length >= 12 ? "p2" : "p1";
 
         // 填入预警框
         if (本地烈度 >= 3) {
             let textWarn, bgcolorRGB, warnLevel;
             if (本地烈度 < 5) {
                 textWarn = "震感强烈";
-                bgcolorRGB = "rgba(250, 211, 10, 0.63)";
+                bgcolorRGB = "rgba(250, 211, 10, 0.77)";
                 warnLevel = "黄色预警";
             } else if (本地烈度 < 7) {
                 textWarn = "可能有破坏";
-                bgcolorRGB = "rgb(254, 135, 30, 0.63)";
+                bgcolorRGB = "rgb(254, 135, 30, 0.77)";
                 warnLevel = "橙色预警";
             } else {
                 textWarn = "强破坏";
-                bgcolorRGB = "rgba(249, 70, 91, 0.63)";
+                bgcolorRGB = "rgba(249, 70, 91, 0.77)";
                 warnLevel = "红色预警";
             }
-            $("#eew_Information").html(`<div style="display: flex; justify-content: space-between;"><b>${震中}</b>${格式化发震时间} </div>
+            $("#eew_Information").html(`<div style="display: flex; justify-content: space-between;"><${size}>${震中}</${size}>${格式化发震时间} </div>
 		  	发生<b>${震级}级</b>地震, ${信息2} <br>
 		  	<b>本地烈度${本地烈度}度, ${textWarn}</b>`);
-            $("#eew_Bar").css("background-color", bgcolorRGB);
+            $("#eew_Bar").css("background", `linear-gradient(${bgcolorRGB}, #00000000)`);
             dingWern = warnLevel;
         } else {
-            $("#eew_Information").html(`<div style="display: flex; justify-content: space-between;"><b>${震中}</b>${格式化发震时间}</div>
+            $("#eew_Information").html(`<div style="display: flex; justify-content: space-between;"><${size}>${震中}</${size}>${格式化发震时间} </div>
            发生<b>${震级}级</b>地震, ${信息2} <br>
            <b>本地烈度${本地烈度}度, ${本地烈度 == 0 ? "无震感" : (本地烈度 < 2 ? "可能有震感" : "震感轻微")}</b>`);
-            $("#eew_Bar").css("background-color", "rgba(82, 165, 243, " + (本地烈度 == 0 ? 0.28 : 0.63) + ")"); // explore
+            $("#eew_Bar").css("background", `linear-gradient(rgba(82, 165, 243, ${本地烈度 == 0 ? 0.28 : 0.77}), #00000000)`);
             dingWern = false;
         }
 
@@ -1209,15 +1211,15 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
                 map,
                 styles: psWaveStyles,
                 geometries: [{
-                        styleId: "pWave",
-                        center: positions,
-                        radius: 7
-                    },
-                    {
-                        styleId: S波的样式,
-                        center: positions,
-                        radius: 4
-                    }
+                    styleId: "pWave",
+                    center: positions,
+                    radius: 7
+                },
+                {
+                    styleId: S波的样式,
+                    center: positions,
+                    radius: 4
+                }
                 ],
             });
         }
@@ -1305,7 +1307,7 @@ function eewCancel() {
     seeScDepICL = false;
     S波倒计时 = null;
     setTimeout(() => {
-        maxIntmarker.destroy();
+        if (maxIntmarker) maxIntmarker.destroy();
         epicenteral.destroy();
         psWaveCircle.destroy();
         maxIntmarker = null;
@@ -1392,15 +1394,15 @@ function setSmoothRadius(psWaveCircle, pWaveRadius, sWaveRadius, centers, sWaveS
     // 如果差值太大，直接设置目标半径而不进行平滑过渡
     if (Math.abs(diffp) > MAX_DIFF || Math.abs(diffs) > MAX_DIFF) {
         psWaveCircle.setGeometries([{
-                styleId: "pWave",
-                center: centers,
-                radius: pWaveRadius
-            },
-            {
-                styleId: sWaveStyle,
-                center: centers,
-                radius: sWaveRadius
-            }
+            styleId: "pWave",
+            center: centers,
+            radius: pWaveRadius
+        },
+        {
+            styleId: sWaveStyle,
+            center: centers,
+            radius: sWaveRadius
+        }
         ]);
         return;
     }
@@ -1415,15 +1417,15 @@ function setSmoothRadius(psWaveCircle, pWaveRadius, sWaveRadius, centers, sWaveS
 
         if (psWaveCircle) {
             psWaveCircle.setGeometries([{
-                    styleId: "pWave",
-                    center: centers,
-                    radius: pWaveNowRadius
-                },
-                {
-                    styleId: sWaveStyle,
-                    center: centers,
-                    radius: sWaveNowRadius
-                }
+                styleId: "pWave",
+                center: centers,
+                radius: pWaveNowRadius
+            },
+            {
+                styleId: sWaveStyle,
+                center: centers,
+                radius: sWaveNowRadius
+            }
             ]);
         }
 
@@ -1510,13 +1512,13 @@ let latitudeInput = document.getElementById("latitude");
 let locationInput = document.getElementById("location");
 
 // 点击设置图标
-settingsIcon.addEventListener("click", function() {
+settingsIcon.addEventListener("click", function () {
     overlay.style.display = "block";
     settingsBox.style.display = "block";
 
     // 淡入效果
     overlay.style.opacity = "0";
-    let fadeEffect = setInterval(function() {
+    let fadeEffect = setInterval(function () {
         if (overlay.style.opacity < 1) overlay.style.opacity = parseFloat(overlay.style.opacity) + 0.1;
         else clearInterval(fadeEffect);
     }, 50);
@@ -1528,7 +1530,7 @@ settingsIcon.addEventListener("click", function() {
 });
 
 // 点击保存按钮
-saveButton.addEventListener("click", function() {
+saveButton.addEventListener("click", function () {
     // 获取输入框的值
     let longitudeValue = longitudeInput.value.trim();
     let latitudeValue = latitudeInput.value.trim();
@@ -1570,7 +1572,7 @@ saveButton.addEventListener("click", function() {
 });
 
 // 点击取消按钮
-cancelButton.addEventListener("click", function() {
+cancelButton.addEventListener("click", function () {
     // 关闭设置界面
     overlay.style.display = "none";
     settingsBox.style.display = "none";
@@ -1667,10 +1669,10 @@ function fitWaveBounds(localInt = null) {
             new TMap.LatLng(Bounds.southwest.latitude - 1, Bounds.southwest.longitude - 1),
             new TMap.LatLng(Bounds.northeast.latitude + 1, Bounds.northeast.longitude + 1)
         ), {
-            ease: {
-                duration: easeop
-            }
+        ease: {
+            duration: easeop
         }
+    }
     );
 }
 
@@ -1783,7 +1785,7 @@ function tts(biaoti, location, magnitude, cenc = null) {
     isSpeaking = true;
     let textToSpeak = (location !== null) ? (biaoti + "，" + location + magnitude + "级") : cenc;
     let utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.onend = function() {
+    utterance.onend = function () {
         isSpeaking = false;
     };
     window.speechSynthesis.speak(utterance);
