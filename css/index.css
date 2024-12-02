@@ -135,7 +135,8 @@ body {
     position: absolute;
     top: 0;
     right: 0;
-    width: calc(100% - 282px);
+    width: calc(100% - 280px);
+    overflow: hidden;
     height: 100%;
 }
 
@@ -151,13 +152,8 @@ body {
 }
 
 #cencList {
-    position: absolute;
-    left: 2px;
-    top: 0px;
-    width: 282px;
+    width: 280px;
     height: 100%;
-    border-radius: 7px;
-    overflow: auto;
     overflow-x: hidden;
     background-color: #282e39;
 }
