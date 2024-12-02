@@ -29,9 +29,9 @@
 ## API 源 使用
 [Wolfx 防灾API](https://wolfx.jp/apidoc)
 
-## Licence
+## License
 
-本软件基于 [GPL-v3](LICENCE) 协议授权
+本软件基于 [GPL-v3](LICENSE) 协议授权
 
 ```
     China Quake 2 (CNQuake2)
