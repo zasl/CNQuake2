@@ -1,4 +1,4 @@
-const version = "v2.0.git1130";
+const version = "v2.0.git1203";
 const iclOA = "";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
 const iclOL = "";
@@ -661,7 +661,7 @@ async function getICLData() {
         let response = await fetch(icurl1);
         if (response.ok) {
             let icljson = await response.json();
-            console.log("[轮询ICL] FAN =>", icljson);
+            console.log("[轮询ICL] wind =>", icljson);
             iclRun(icljson, "bot");
             if (!timeCs) {
                 timeCs = true;
@@ -848,11 +848,11 @@ function handleFirstItem(listType, listTime, listTimeDisply, location, latitude,
     $("#listType1").text(listType);
     if (!oneAudio) {
         oneAudio = true;
-        showCustomNotification("通知已开启", "如果看到此信息，表明预警信息推送已开启。");
+        showCustomNotification("📩 通知已开启", "如果看到此信息，表明预警信息推送已开启。");
     } else {
         audioCENC.play();
-        const cencShow = `中国地震台网${listType}: ${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
-        showCustomNotification("地震信息", cencShow);
+        const cencShow = `${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
+        showCustomNotification(`${listType == "正式测定" ? "🔔" : "📨"} 中国地震台网 ${listType}`, cencShow);
         tts(null, null, null, cencShow);
     }
     eew("cenc", listTime, location, parseFloat(latitude), parseFloat(longitude), parseFloat(magnitude), listType, null, parseFloat(depth), null, !oneAudio);
@@ -1156,7 +1156,7 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
         }
 
         $("#eew_source").text(sourceText);
-        if (isOneCENC) showCustomNotification(sourceText, message);
+        if (isOneCENC) showCustomNotification(`${本地烈度 > 0 ? "🚨" : "⚠️"} ${sourceText}`, message);
 
         if (最大烈度 == null) 最大烈度 = "约" + calcMaxInt(震级, 10, 震中);
 
@@ -1285,7 +1285,7 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
         if (本地烈度 > 0) addHomeToMap();
         S波倒计时 = countdown(距离, 深度, 时差 / 1000);
         $("#eew_countdown").text(S波倒计时);
-        if (isOneCENC && (本地烈度 == 0 || S波倒计时 >= 30)) tts(sourceText, 震中, 震级);
+        if (isOneCENC && (本地烈度 == 0 || S波倒计时 > 35 || S波倒计时 < 0)) tts(sourceText, 震中, 震级);
         else if (isOneCENC && S波倒计时 > 0) toastr.warning("时间紧迫，请立即采取措施！", "请注意");
         S波倒计时 = null;
         setTimeout(() => fitWaveBounds(本地烈度), 1000);
