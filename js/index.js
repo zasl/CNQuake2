@@ -1,7 +1,7 @@
-const version = "v2.0.git1203";
-const iclOA = "";
+const version = "v2.0.241204";
+const iclOA = "https://mobile-new.chinaeew.cn/v1/earlywarnings?updates&start_at&timestamp=";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
-const iclOL = "";
+const iclOL = "https://api.fanstudio.tech/eq/icl_only.php?timestamp=";
 
 document.addEventListener("keydown", function (event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -851,9 +851,10 @@ function handleFirstItem(listType, listTime, listTimeDisply, location, latitude,
         showCustomNotification("📩 通知已开启", "如果看到此信息，表明预警信息推送已开启。");
     } else {
         audioCENC.play();
+        const cencType = `${listType == "正式测定" ? "🔔" : "📨"} 中国地震台网 ${listType}`;
         const cencShow = `${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
-        showCustomNotification(`${listType == "正式测定" ? "🔔" : "📨"} 中国地震台网 ${listType}`, cencShow);
-        tts(null, null, null, cencShow);
+        showCustomNotification(cencType, cencShow);
+        tts(null, null, null, `${cencType}：${cencShow}`);
     }
     eew("cenc", listTime, location, parseFloat(latitude), parseFloat(longitude), parseFloat(magnitude), listType, null, parseFloat(depth), null, !oneAudio);
 }
