@@ -1,4 +1,4 @@
-const version = "v2.0.241206";
+const version = "v2.0.git1206";
 const iclOA = "";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
 const iclOL = "";
