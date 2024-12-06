@@ -1,4 +1,4 @@
-const version = "v2.0.git1204";
+const version = "v2.0.241206";
 const iclOA = "";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
 const iclOL = "";
@@ -851,9 +851,9 @@ function handleFirstItem(listType, listTime, listTimeDisply, location, latitude,
         showCustomNotification("📩 通知已开启", "如果看到此信息，表明预警信息推送已开启。");
     } else {
         audioCENC.play();
-        const cencType = `${listType == "正式测定" ? "🔔" : "📨"} 中国地震台网 ${listType}`;
+        const cencType = `中国地震台网 ${listType}`;
         const cencShow = `${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
-        showCustomNotification(cencType, cencShow);
+        showCustomNotification(`${listType == "正式测定" ? "🔔" : "📨"} cencType`, cencShow);
         tts(null, null, null, `${cencType}：${cencShow}`);
     }
     eew("cenc", listTime, location, parseFloat(latitude), parseFloat(longitude), parseFloat(magnitude), listType, null, parseFloat(depth), null, !oneAudio);
@@ -1102,7 +1102,7 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
     let 时差 = currentTimestamp - 发震时间;
     console.log(`[eew] 时差 => ${时差}`);
 
-    if (时差 <= 300000 || eewBounds) {
+    if (时差 <= 300000 || (eewBounds && 类型 == "cenc")) {
         if (类型 == "icl" && scSta || 类型 == "icl" && twSta) {
             console.log(`[eew] 省地震局正在预警，ICL无需插手 => ${类型} ${震中} ${深度}km`);
             if (scSta) {
