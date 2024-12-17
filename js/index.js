@@ -1,4 +1,4 @@
-const version = "v2.0.git1206";
+const version = "v2.0.git1213";
 const iclOA = "";
 // 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
 const iclOL = "";
@@ -535,10 +535,10 @@ async function getAllData() {
 
         setTimeout(() => {
             socket.send("query_cenceqlist");
+            socket.send("query_jmaeew");
             socket.send("query_cwaeew");
             socket.send("query_fjeew");
             socket.send("query_sceew");
-            socket.send("query_jmaeew");
         }, 2000)
 
     });
@@ -853,7 +853,7 @@ function handleFirstItem(listType, listTime, listTimeDisply, location, latitude,
         audioCENC.play();
         const cencType = `中国地震台网 ${listType}`;
         const cencShow = `${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
-        showCustomNotification(`${listType == "正式测定" ? "🔔" : "📨"} cencType`, cencShow);
+        showCustomNotification(`${listType == "正式测定" ? "🔔" : "📨"} ${cencType}`, cencShow);
         tts(null, null, null, `${cencType}：${cencShow}`);
     }
     eew("cenc", listTime, location, parseFloat(latitude), parseFloat(longitude), parseFloat(magnitude), listType, null, parseFloat(depth), null, !oneAudio);
