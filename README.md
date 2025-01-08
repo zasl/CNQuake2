@@ -50,7 +50,7 @@
 
 ```
     China Quake 2 (CNQuake2)
-    Copyright (C) 2024  HomoOS
+    Copyright (C) 2024 - 2025  HomoOS
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
