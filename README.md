@@ -13,9 +13,7 @@
 ---
 
 > [!IMPORTANT]  
-> 此开源版本不提供
-> [ICL（中国地震预警网）](http://www.365icl.com/index.asp)
-> 和[CEA（中国地震局预警）](https://www.cea.gov.cn/)信息源
+> 此开源版本不提供[ICL（中国地震预警网）](http://www.365icl.com/index.asp)和[CEA（中国地震局预警）](https://www.cea.gov.cn/)信息源
 
 > [!TIP]
 > 你可以自己在`ceewn.js`里添加不提供的预警源
@@ -24,7 +22,6 @@
 1. 设置-本地烈度触发阀值
 2. 多震适配
 3. 用 其他方式 画地震波，而不是用官方的[`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13)，要贴合地球。
-4. 
 > [!NOTE]  
 > **以上还是你们来写吧**
 
