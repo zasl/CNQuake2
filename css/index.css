@@ -14,11 +14,6 @@
 }
 
 @font-face {
-    font-family: "P-B";
-    src: url("../fonts/Pixel_Experience-Bold.woff2") format("woff2");
-}
-
-@font-face {
     font-family: "iconfont";
     src: url("../fonts/font_1010028_f3us4eopbul.woff") format("woff")
 }
@@ -147,7 +142,7 @@ body {
     color: white;
     font-size: 21px;
     z-index: 100;
-    font-family: "P-B";
+    font-family: "H-B";
     text-shadow: 1px 1px 2px black;
 }
 
