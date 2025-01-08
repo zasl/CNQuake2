@@ -4,13 +4,11 @@
 将会尽快处理
 
 ## 注意
-需要在一个`https`环境里运行，且需要[`SSL`](https://info.support.huawei.com/info-finder/encyclopedia/zh/SSL.html)证书，不能以`file`打开，因为有以下几点：
-1. 
 > [!CAUTION]
-> 腾讯地图不允许，因为[`CORS`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS)跨域问题，否则地图上的所有图标都为默认`Marker`。
-2. 
+> 需在`https`环境下运行，并需配置[`SSL`](https://info.support.huawei.com/info-finder/encyclopedia/zh/SSL.html)证书。由于腾讯地图的[`CORS`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS)跨域限制，不可通过`file`方式打开，否则地图上的所有图标将显示为默认`Marker`。
+
 > [!WARNING]  
-> 只有安全的连接才能使用`PWA`和[`Service worker`](https://developer.mozilla.org/zh-CN/docs/Web/API/Service_Worker_API)，才能发送通知。
+> 并且只有安全的连接才能使用`PWA`和[`Service worker`](https://developer.mozilla.org/zh-CN/docs/Web/API/Service_Worker_API)，才能发送通知。
 
 ---
 
