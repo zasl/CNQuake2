@@ -1,8 +1,5 @@
-const version = "v2.0.git1213";
-const iclOA = "";
-// 链接：完整条目(官方)↑ | 仅第一条目(BOT)↓ ||优先访问第1条目，如果失败后访问完整条目|| ICL链接暂不提供
-const iclOL = "";
-
+const version = "v2.0.250108";
+const ohcil = false;
 document.addEventListener("keydown", function (event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
     if (
@@ -654,52 +651,51 @@ async function getAllData() {
 
 const justTimeColor = () => $("#serverTime").css("color", timeCs ? "white" : "#f51c15");
 
-async function getICLData() {
-    const icurl1 = iclOL + currentTimestamp;
-    try {
-        // 尝试访问第一个URL
-        let response = await fetch(icurl1);
-        if (response.ok) {
-            let icljson = await response.json();
-            console.log("[轮询ICL] wind =>", icljson);
-            iclRun(icljson, "bot");
-            if (!timeCs) {
-                timeCs = true;
-                justTimeColor();
-            }
-        } else {
-            // 如果第一个URL失败，则抛出错误
-            throw new Error("咦？第一不行，推动完整");
-        }
-    } catch (error) {
-        // 捕获错误，尝试访问第二个URL
-        const icurl2 = iclOA + currentTimestamp;
-        try {
-            let response = await fetch(icurl2);
-            if (response.ok) {
-                let icljson = await response.json();
-                console.log("[轮询ICL] 访问官方 =>", icljson);
-                iclRun(icljson, "icl");
-                if (!timeCs) {
-                    timeCs = true;
-                    justTimeColor();
-                }
-            } else {
-                // 如果第二个URL也失败，则处理错误或抛出异常
-                console.error("[轮询ICL] 1 -> 不是网络问题就是官方出事了");
-            }
-        } catch (error) {
-            // 如果第二个请求也失败，则处理错误
-            console.error("[轮询ICL] 2 -> 那就是不是网络问题就是官方出事了 =>", error);
+let lastUpdateAt, lastUpdates, lastUpdateAtCea, lastUpdatesCea; // 用于存储上次更新的时间戳，以便比较是否有新的更新
+
+function startCEEWNDataFetching() {
+    const ciworker = new Worker("./js/ceewn.js");
+    ciworker.onerror = (event) => {
+        console.error("Worker error:", event);
+    };
+    ciworker.onmessage = (event) => {
+        const eewData = event.data;
+        if (eewData.type == "cea-bot") {
+            ceaRun(eewData.data);
+        } else if (eewData.type == "icl-bot" || eewData.type == "icl-official") {
+            iclRun(eewData.data, eewData.type);
+        } else if (eewData.type == "cea-error") {
             if (timeCs) {
                 timeCs = false;
                 justTimeColor();
             }
+            console.error(eewData.data);
         }
-    }
+    };
+    const ceaRun = (eewData) => {
+        let {
+            shockTime: timeCEA,
+            placeName: centerCEA,
+            latitude: latCEA,
+            longitude: lonCEA,
+            magnitude: zhenjiCEA,
+            depth: depCEA,
+            updateAt: currentUpdateAt,
+            updates: whatbaoCEA
+        } = eewData.Data;
+        if (lastUpdateAtCea !== currentUpdateAt || whatbaoCEA !== lastUpdatesCea) {
+            console.log("[执行CEA] 调用eew"); // 打印调用信息
+            lastUpdateAtCea = currentUpdateAt;
+            lastUpdatesCea = whatbaoCEA;
+            depCEA = depCEA ?? 0;
+            eew("cea", timeCEA, centerCEA, latCEA, lonCEA, Number(zhenjiCEA), whatbaoCEA, null, depCEA);
+        }
+        if (!timeCs) {
+            timeCs = true;
+            justTimeColor();
+        }
+    };
 }
-
-let lastUpdateAt, lastUpdates; // 用于存储上次更新的时间戳，以便比较是否有新的更新
 
 function iclRun(json, type) {
     // 检查输入参数是否有效
@@ -729,20 +725,23 @@ function iclRun(json, type) {
             lastUpdates = whatbaoICL;
             eew("icl", timeICL, centerICL, latICL, lonICL, zhenjiICL, whatbaoICL, null, depICL); // 调用eew函数
         }
+        if (!timeCs) {
+            timeCs = true;
+            justTimeColor();
+        }
     };
 
     // 根据类型处理不同的数据
-    if (type == "bot") processData(json.Data);
-    else if (type == "icl") processData(json.data[0]);
+    if (type == "icl-bot") processData(json.Data);
+    else if (type == "icl-official") processData(json.data[0]);
     else console.error("[执行ICL] 类型不对？不可能吧？");
 }
 
 $(document).ready(() => {
     getAllData();
-    if (iclOA || iclOL) startICLDataFetching();
-    else console.warn("未启用ICL");
+    if (ohcil) startCEEWNDataFetching();
+    else console.warn("这是开源版本，不包含中国地震预警网信息源。");
 });
-const startICLDataFetching = () => setTimeout(() => setInterval(getICLData, 5000), 3000);
 
 const clickHandlers = {};
 function cencRun(json) {
@@ -1108,14 +1107,17 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
             if (scSta) {
                 let 距离 = getDistance(lat, lon, homeLat, homeLon);
                 S波倒计时 = countdown(距离, 深度, 时差 / 1000);
-                toastr.info(震中 + " M" + 震级 + " 深度" + 深度 + "km", "补深度");
+                toastr.info(`#${多少报} ${震中} M${震级} 深度 ${深度}km"`, "中国地震预警网");
                 seeScDepICL = 深度;
             }
             return;
         }
 
         震级 = 震级.toFixed(1);
-        if (类型 == "cwa_eew") 震中 = "台湾" + converter(震中);
+        if (类型 == "cwa_eew") {
+            震中 = "台湾" + converter(震中);
+            震级 -= 1;
+        }
         if (类型 == "fj_eew" && 震中.length > 10) 震中 = 震中.replace("附近海域", "近海");
         let 距离 = getDistance(lat, lon, homeLat, homeLon),
             本地烈度 = calcHomeMaxInt(震级, 距离),
@@ -1132,12 +1134,16 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
                 break;
             case "fj_eew":
             case "cwa_eew":
-                sourceText = 类型 === "fj_eew" ? `福建地震局预警 ${最终 ? "最终第" : "第"}${多少报}报` : `中央气象署预警 ${最终 ? "最终第" : "第"}${多少报}报`;
+                sourceText = 类型 === "fj_eew" ? `福建地震局预警 ${最终 ? "最终第" : "第"}${多少报}报` : `台湾气象署预警 ${最终 ? "最终第" : "第"}${多少报}报`;
                 playAudio(twSta ? "更新" : "alert");
                 twSta = true;
                 break;
             case "icl":
                 sourceText = `中国地震预警网 第${多少报}报`;
+                playAudio(eewBounds ? "更新" : "alert");
+                break;
+            case "cea":
+                sourceText = `中国地震局预警 第${多少报}报`;
                 playAudio(eewBounds ? "更新" : "alert");
                 break;
             case "cenc":
