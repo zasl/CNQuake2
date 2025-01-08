@@ -13,7 +13,9 @@
 ---
 
 > [!IMPORTANT]  
-> 此开源版本不提供[ICL（中国地震预警网）](http://www.365icl.com/index.asp)和[CEA（中国地震局预警）](https://www.cea.gov.cn/)
+> 此开源版本不提供
+> [ICL（中国地震预警网）](http://www.365icl.com/index.asp)
+> 和[CEA（中国地震局预警）](https://www.cea.gov.cn/)信息源
 
 > [!TIP]
 > 你可以自己在`ceewn.js`里添加不提供的预警源
