@@ -80,10 +80,9 @@ async function getICLData() {
             throw new Error("咦？第一不行，推动完整");
         }
     } catch (error) {
-        // 捕获错误，尝试访问第二个URL
-        const icurl2 = iclOA + currentTimestamp;
+        // 捕获错误，尝试访问第二个URL;
         try {
-            let response = await fetch(icurl2);
+            let response = await fetch(iclOA);
             if (response.ok) {
                 let icljson = await response.json();
                 console.log("[轮询ICL] 访问官方 =>", icljson);
