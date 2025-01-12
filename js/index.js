@@ -1116,10 +1116,7 @@ function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大�
         }
 
         震级 = 震级.toFixed(1);
-        if (类型 == "cwa_eew") {
-            震中 = "台湾" + converter(震中);
-            震级 -= 1;
-        }
+        if (类型 == "cwa_eew") 震中 = "台湾" + converter(震中);
         if (类型 == "fj_eew" && 震中.length > 10) 震中 = 震中.replace("附近海域", "近海");
         let 距离 = getDistance(lat, lon, homeLat, homeLon),
             本地烈度 = calcHomeMaxInt(震级, 距离),
