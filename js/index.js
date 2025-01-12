@@ -1,6 +1,6 @@
 const ohcil = false;
 const isGit = ohcil ? "v2.0.25" : "v2.0.git";
-const version = isGit + "0108";
+const version = isGit + "0112";
 
 document.addEventListener("keydown", function (event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
