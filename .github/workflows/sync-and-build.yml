@@ -1,55 +1,20 @@
-name: Sync and Build
+name: Initial Docker Build
 
 on:
-  # 手动触发选项
+  # 只能手动触发
   workflow_dispatch:
-  
-  # 定期检查上游仓库更新
-  schedule:
-    - cron: '0 0 * * *'  # 每天UTC时间00:00检查一次
 
 jobs:
-  sync-and-build:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      
-      - name: Configure Git
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-      
-      - name: Add upstream remote
-        run: git remote add upstream https://github.com/thefirsttime2021/CNQuake2.git
-      
-      - name: Fetch from upstream
-        run: git fetch upstream
-      
-      - name: Check for changes
-        id: check_changes
-        run: |
-          if [ $(git rev-list --count HEAD..upstream/main) -gt 0 ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in upstream repository"
-          else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No changes in upstream repository"
-          fi
-      
-      - name: Merge upstream changes
-        if: steps.check_changes.outputs.has_changes == 'true'
-        run: |
-          git merge upstream/main --no-edit || (echo "Merge conflict detected, aborting" && git merge --abort && exit 1)
-          git push origin main
+      - name: Checkout code
+        uses: actions/checkout@v3
       
       - name: Set up Docker Buildx
-        if: steps.check_changes.outputs.has_changes == 'true'
         uses: docker/setup-buildx-action@v2
       
       - name: Login to GitHub Container Registry
-        if: steps.check_changes.outputs.has_changes == 'true'
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -57,7 +22,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and push
-        if: steps.check_changes.outputs.has_changes == 'true'
         uses: docker/build-push-action@v4
         with:
           context: .
