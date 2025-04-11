@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  cnquake2:
+    build: .
+    container_name: cnquake2
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      # 时区设置
+      - TZ=Asia/Shanghai
+      # 腾讯地图API密钥
+      - TENCENT_MAP_API_KEY=OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77
+      # 默认位置设置（可选）
+      - DEFAULT_LONGITUDE=106.21
+      - DEFAULT_LATITUDE=38.46
+      - DEFAULT_LOCATION=银川市
+      # 预警设置（可选）
+      - ENABLE_NOTIFICATIONS=true
+      # 最小预警震级
+      - MIN_MAGNITUDE=3.0
