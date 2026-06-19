@@ -1,6 +1,15 @@
-const ohcil = false;
-const isGit = ohcil ? "v2.0.25" : "v2.0.git";
-const version = isGit + "0112";
+const version = "v2.0.260619";
+
+// 时间同步相关变量
+let nowCNtimeStamp = {
+    CST: Date.now(),  // 当前中国标准时间
+    ndDelta: 0        // 与服务器的时间偏差
+};
+let fastIntervalId = null;
+let hasSwitched = false;
+let isPageVisible = true;
+let lastPingTime = 0;  // 发送ping的时间
+let networkRTT = 0;    // 网络延迟
 
 document.addEventListener("keydown", function (event) {
     // 禁用/放宽F12和Ctrl+Shift+I以及其他常见的调试快捷键
@@ -56,33 +65,21 @@ if (!homeLat || !homeLon || !homeLocte) {
     toastr.info("请到设置中填写您所在地地名及经纬度信息，否则默认为德阳市旌阳区")
 }
 
-// 检查浏览器是否支持serviceWorker
-if ("serviceWorker" in navigator) {
-    // 当窗口加载完毕时，注册serviceWorker并追踪安装中的worker
-    window.addEventListener("load", () => {
-        registerServiceWorker();
-        trackInstallingWorker();
-    });
-}
-
 // 显示自定义通知
 function showCustomNotification(title, message) {
-    // 检查浏览器是否支持serviceWorker和Notification API
-    if ("serviceWorker" in navigator && "Notification" in window) {
+    // 检查浏览器是否支持Notification API
+    if ("Notification" in window) {
         // 请求通知权限
         Notification.requestPermission().then(permission => {
             // 如果用户授予了权限
             if (permission === "granted") {
-                // 等待serviceWorker就绪
-                navigator.serviceWorker.ready.then(registration => {
-                    // 显示通知
-                    registration.showNotification(title, {
-                        body: message,
-                        icon: "./img/icon512.png",
-                        data: {
-                            url: "./"
-                        }
-                    });
+                // 直接显示通知
+                new Notification(title, {
+                    body: message,
+                    icon: "./img/icon512.png",
+                    data: {
+                        url: "./"
+                    }
                 });
             } else {
                 console.log("[通知显示] 用户拒绝了通知权限。");
@@ -91,84 +88,6 @@ function showCustomNotification(title, message) {
             console.error("[通知显示] 请求通知权限时发生错误：", error);
         });
     }
-}
-
-// 注册serviceWorker
-function registerServiceWorker() {
-    // 获取当前注册的serviceWorker
-    navigator.serviceWorker.getRegistration().then(registration => {
-        // 如果已经注册
-        if (registration) {
-            console.log("[注册SW] ServiceWorker已注册");
-            // 如果有新的版本等待激活
-            if (registration.waiting) {
-                console.log("[注册SW] 有新的ServiceWorker");
-                toastr.info("单击 更新 按钮以更新", "有更新可用");
-                promptUpdate(registration.waiting);
-            }
-        } else {
-            // 如果没有注册，注册serviceWorker
-            navigator.serviceWorker.register("./sw.js").then(registration => {
-                console.log("[注册SW] ServiceWorker 注册成功，作用域 =>", registration.scope);
-            }).catch(error => {
-                // 如果注册失败，记录错误
-                console.error("[注册SW] ServiceWorker 注册失败 =>", error);
-            });
-        }
-    });
-}
-
-// 追踪安装中的worker
-function trackInstallingWorker() {
-    // 当检测到更新时
-    navigator.serviceWorker.addEventListener("updatefound", () => {
-        // 获取注册信息
-        navigator.serviceWorker.getRegistration().then(registration => {
-            // 获取安装中的worker
-            const installingWorker = registration.installing;
-            // 监听worker状态变化
-            installingWorker.addEventListener("statechange", () => {
-                // 如果安装完成且没有控制该页面的worker
-                if (installingWorker.state === "installed" && !navigator.serviceWorker.controller) {
-                    promptUpdate(installingWorker);
-                }
-            });
-        });
-    });
-}
-
-// 提示更新
-function promptUpdate(worker) {
-    // 如果没有更新按钮
-    if (!document.getElementById("updateButton")) {
-        // 创建更新按钮
-        const updateButton = document.createElement("button");
-        updateButton.id = "updateButton";
-        updateButton.textContent = "更新";
-        // 点击按钮时，发送消息给worker以激活更新
-        updateButton.addEventListener("click", () => {
-            worker.postMessage({
-                action: "skipWaiting"
-            });
-        });
-
-        // 获取容器元素
-        const container = document.getElementById("container");
-        if (container) {
-            // 将按钮添加到容器
-            container.appendChild(updateButton);
-        } else {
-            // 如果找不到容器，记录错误
-            console.error("[提示更新] 找不到ID为\"container\"的元素！");
-        }
-    }
-}
-
-// 监听controllerchange事件以处理更新
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-        toastr.info("更新将在 手动刷新/重启应用程序 后生效", "发生Controllerchange事件");
-    });
 }
 
 const intColor = {
@@ -261,13 +180,22 @@ async function fetchWeatherData() {
         const response = await fetch("https://api.rainviewer.com/public/weather-maps.json");
         const data = await response.json();
 
-        // 从 satellite.infrared 中获取最新的时间戳数据
-        const latestSatelliteData = data.satellite.infrared.reduce((latest, current) => {
+        if (!data.radar || !data.radar.past || data.radar.past.length === 0) {
+            console.error("[rainviewer] API响应中没有雷达数据:", data);
+            return null;
+        }
+
+        // 从 radar.past 中获取最新的时间戳数据
+        const latestRadarData = data.radar.past.reduce((latest, current) => {
             return (current.time > latest.time) ? current : latest;
         });
 
-        // 返回最新的时间戳
-        return latestSatelliteData ? latestSatelliteData.time : null;
+        // 返回最新的时间戳和host信息
+        return {
+            timestamp: latestRadarData.time,
+            host: data.host,
+            path: latestRadarData.path
+        };
     } catch (error) {
         console.error("[rainviewer] 获取天气数据时出错 =>", error);
         return null;
@@ -277,9 +205,9 @@ async function fetchWeatherData() {
 let rainviewerLayer;
 // 创建图层的函数
 async function createImageTileLayer() {
-    const latestTimestamp = await fetchWeatherData();
+    const weatherData = await fetchWeatherData();
 
-    if (latestTimestamp) {
+    if (weatherData) {
         if (rainviewerLayer) {
             rainviewerLayer.destroy();
             rainviewerLayer = null;
@@ -287,17 +215,20 @@ async function createImageTileLayer() {
         // 创建新的图层
         rainviewerLayer = new TMap.ImageTileLayer({
             getTileUrl: function (x, y, z) {
-                let url = "https://tilecache.rainviewer.com/v2/radar/" + latestTimestamp + "/512/" + z + "/" + x + "/" + y + "/4/1_1.png";
-                return url;
+                // 使用API返回的host和path构建URL
+                // color=2 是 Universal Blue（唯一可用的配色方案）
+                // options=1_1 表示平滑+显示雪
+                return `${weatherData.host}${weatherData.path}/512/${z}/${x}/${y}/2/1_1.png`;
             },
             tileSize: 256,
             minZoom: 0,
-            maxZoom: 17,
+            maxZoom: 7, // API变更：最大缩放级别改为7
             visible: true,
             zIndex: 0,
             opacity: 0.35,
             map: map,
         });
+        console.log("[创建天气图层] 成功，时间戳:", weatherData.timestamp);
     } else {
         console.error("[创建天气图层] 无法获取最新的时间戳。");
     }
@@ -372,7 +303,8 @@ const converter = OpenCC.Converter({
     from: "tw",
     to: "cn"
 });
-let delta, cencmd51, S波倒计时, oneAudio = false,
+let cencmd51, S波倒计时, oneAudio = false,
+    spokenEventIds = new Set(), // 记录已播报的事件ID，避免重复播报
     CurrentTime, 更新秒数, cencMarkers = null,
     maxIntmarker = null,
     dingWern = false,
@@ -388,7 +320,7 @@ let delta, cencmd51, S波倒计时, oneAudio = false,
     cencPopups = [],
     audioCENC = new Audio("./audio/CENC update.wav"),
     timeCs = true,
-    currentTimestamp;
+    currentTimestamp = Date.now();
 const warnJPcenters = ["台湾付近", "与那国島近海", "石垣島北西沖", "石垣島南方沖", "西表島付近", "石垣島近海", "宮古島近海"];
 
 class HEQC {
@@ -523,21 +455,15 @@ class HEQC {
 }
 
 async function getAllData() {
-    const socket = new WebSocket("wss://ws-api.wolfx.jp/all_eew");
+    const socket = new WebSocket("wss://ws.fanstudio.tech/all");
 
     socket.addEventListener("open", (allOpen) => {
-        clearInterval(CurrentTime);
-        CurrentTime = setInterval(getCurrentTime, 1000);
-
+        startTimeInterval();
         console.log("[WebSocket消息] 已连接到 WebSocket.");
         toastr.success("已连接到 WebSocket.");
 
         setTimeout(() => {
-            socket.send("query_cenceqlist");
-            socket.send("query_jmaeew");
-            socket.send("query_cwaeew");
-            socket.send("query_fjeew");
-            socket.send("query_sceew");
+            socket.send("query");
         }, 2000)
 
     });
@@ -545,98 +471,128 @@ async function getAllData() {
     socket.addEventListener("message", (allMessage) => {
         let json = JSON.parse(allMessage.data);
 
-        console.log("[WebSocket消息] wolfx =>", json);
+        console.log("[WebSocket消息] fanstudio =>", json);
 
         if (json.type == "heartbeat") {
-            const sTimestamp = json.timestamp;
-            delta = Date.now() - sTimestamp;
-        }
-        if (json.type == "sc_eew") {
-            let time = json.OriginTime,
-                center = json.HypoCenter,
-                lat = json.Latitude,
-                lon = json.Longitude,
-                zhenji = json.Magunitude,
-                whatbao = json.ReportNum,
-                maxInt = json.MaxIntensity;
-            eew(json.type, time, center, lat, lon, zhenji, whatbao, maxInt)
-        }
-
-        if (json.type == "fj_eew") {
-            let timeFujian = json.OriginTime,
-                centerFujian = json.HypoCenter,
-                latFujian = json.Latitude,
-                lonFujian = json.Longitude,
-                zhenjiFujian = json.Magunitude,
-                whatbaoFujian = json.ReportNum,
-                isFinalFujian = json.isFinal;
-            eew(json.type, timeFujian, centerFujian, latFujian, lonFujian, zhenjiFujian, whatbaoFujian, null, null, isFinalFujian)
-        }
-
-        if (json.type == "cwa_eew") {
-            let timeTaiwan = json.OriginTime,
-                centerTaiwan = json.HypoCenter,
-                latTaiwan = json.Latitude,
-                lonTaiwan = json.Longitude,
-                zhenjiTaiwan = json.Magunitude,
-                whatbaoTaiwan = json.ReportNum,
-                depTaiwan = json.Depth,
-                isCancelTaiwan = json.isCancel;
-            eew(json.type, timeTaiwan, centerTaiwan, latTaiwan, lonTaiwan, zhenjiTaiwan, whatbaoTaiwan, null, depTaiwan);
-            if (isCancelTaiwan) {
-                toastr.info("中央气象署已取消发布的地震预警", "地震预警取消");
-                eewCancel();
+            const receiveTime = Date.now();
+            const serverTimestamp = json.timestamp;
+            
+            // 计算网络延迟（RTT）
+            if (lastPingTime > 0) {
+                networkRTT = receiveTime - lastPingTime;
+                console.log(`[时间同步] 网络延迟: ${networkRTT}ms`);
+                
+                // 如果延迟过长，跳过时间校准
+                if (networkRTT > 1000) {
+                    console.log(`[时间同步] 跳过时间校准，RTT过长: ${networkRTT}ms`);
+                    lastPingTime = 0;
+                    return;
+                }
+                
+                // 计算时间偏差
+                const halfRTT = networkRTT / 2;
+                const localTime = receiveTime - halfRTT;
+                const timeDelta = localTime - serverTimestamp;
+                
+                nowCNtimeStamp.ndDelta = timeDelta;
+                console.log(`[时间同步] 已同步校准时间，时间偏差: ${timeDelta}ms; 网络RTT: ${networkRTT}ms`);
+            }
+            
+            // 发送下一个ping
+            if (isPageVisible) {
+                lastPingTime = Date.now();
+                socket.send("ping");
             }
         }
 
-        if (json.type == "jma_eqlist") {
-            toastr.info(`
-                ${json.No1.Title}<br>
-                发震时间: ${json.No1.time}(UTC+9)<br>
-                震中: ${json.No1.location || "调查中"}（${json.No1.latitude || "?"}, ${json.No1.longitude || "?"}）<br>
-                震级: ${json.No1.magnitude || "?"}<br>
-                深度: ${json.No1.depth}<br>
-                最大震度: ${json.No1.shindo}<br>
-            `, "日本气象厅情报");
+        // 处理初始数据和查询响应
+        if (json.type == "initial_all") {
+            // 处理CENC预警数据（单个最新事件，用于预警）
+            if (json.cenc && json.cenc.Data) {
+                // 只用于预警，不更新列表
+                const cencData = json.cenc.Data;
+                if (cencData && !Array.isArray(cencData)) {
+                    // 单个预警事件
+                    eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, "正式测定", null, cencData.depth, null);
+                    // 收到预警数据后，发送 cenclist 请求获取完整列表
+                    socket.send("cenclist");
+                }
+            }
+            // 处理CEA数据
+            if (json.cea && json.cea.Data) {
+                processCeaData(json.cea.Data);
+            }
+            // 处理CWA-EEW数据
+            if (json["cwa-eew"] && json["cwa-eew"].Data) {
+                processCwaEewData(json["cwa-eew"].Data);
+            }
+            // 处理JMA数据
+            if (json.jma && json.jma.Data) {
+                processJmaData(json.jma.Data);
+            }
         }
 
-        if (json.type == "jma_eew") {
-            let timeJP = json.OriginTime,
-                centerJP = json.Hypocenter,
-                latJP = json.Latitude,
-                lonJP = json.Longitude,
-                zhenjiJP = json.Magunitude,
-                whatbaoJP = json.Serial,
-                depJP = json.Depth,
-                maxIntJP = json.MaxIntensity,
-                biaotiJP = json.Title,
-                isCancelJP = json.isCancel,
-                isFinalJP = json.isFinal,
-                isWarnJP = json.isWarn;
+        // 处理增量更新
+        if (json.type == "update") {
+            const source = json.source;
+            const data = json.Data;
 
-            if (scSta || twSta) {
-                eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
-            } else if (isWarnJP) {
-                eew("jma_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
-                eewToastr(true, null, centerJP, null, null, null, null, depJP, null, null, null, null);
-                if (isCancelJP) {
-                    eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
-                    eewCancel();
-                }
-            } else if (warnJPcenters.includes(centerJP)) {
-                centerJP = centerJP == "宮古島近海" ? "琉球群岛附近" : "中国台湾附近";
-                eew("jma_tw_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
-                eewToastr(true, timeJP, centerJP, null, null, null, null, depJP, null, null, null, null);
-                if (isCancelJP) {
-                    eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
-                    eewCancel();
-                }
+            switch (source) {
+                case "cenc":
+                    // CENC更新只用于预警，不更新列表
+                    if (data && !Array.isArray(data)) {
+                        eew("cenc", data.shockTime, data.placeName, data.latitude, data.longitude, data.magnitude, "正式测定", null, data.depth, null);
+                        // 收到预警更新后，重新请求列表
+                        socket.send("cenclist");
+                    }
+                    break;
+                case "cea":
+                    processCeaData(data);
+                    break;
+                case "cwa-eew":
+                    processCwaEewData(data);
+                    break;
+                case "jma":
+                    processJmaData(data);
+                    break;
+            }
+        }
+
+        // 处理CENC列表响应
+        if (json.type == "cenclist_response") {
+            console.log("[WebSocket消息] 收到 cenclist_response，数据数量:", json.Data?.length);
+            if (json.Data && Array.isArray(json.Data)) {
+                cencEventList = json.Data;
+                console.log("[WebSocket消息] cenclist_response 数据已更新到 cencEventList");
+                displayCencList();
             } else {
-                eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
+                console.error("[WebSocket消息] cenclist_response 数据格式错误:", json);
             }
         }
-
-        if (json.type == "cenc_eqlist") cencRun(json);
+        
+        // 处理query_response（与initial_all相同结构）
+        if (json.type == "query_response") {
+            // 处理CENC预警数据（单个最新事件，用于预警）
+            if (json.cenc && json.cenc.Data) {
+                const cencData = json.cenc.Data;
+                if (cencData && !Array.isArray(cencData)) {
+                    // 单个预警事件
+                    eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, "正式测定", null, cencData.depth, null);
+                }
+            }
+            // 处理CEA数据
+            if (json.cea && json.cea.Data) {
+                processCeaData(json.cea.Data);
+            }
+            // 处理CWA-EEW数据
+            if (json["cwa-eew"] && json["cwa-eew"].Data) {
+                processCwaEewData(json["cwa-eew"].Data);
+            }
+            // 处理JMA数据
+            if (json.jma && json.jma.Data) {
+                processJmaData(json.jma.Data);
+            }
+        }
     });
 
     socket.addEventListener("error", (allError) => {
@@ -655,178 +611,238 @@ const justTimeColor = () => $("#serverTime").css("color", timeCs ? "white" : "#f
 
 let lastUpdateAt, lastUpdates, lastUpdateAtCea, lastUpdatesCea; // 用于存储上次更新的时间戳，以便比较是否有新的更新
 
-function startCEEWNDataFetching() {
-    const ciworker = new Worker("./js/ceewn.js");
-    ciworker.onerror = (event) => {
-        console.error("Worker error:", event);
-    };
-    ciworker.onmessage = (event) => {
-        const eewData = event.data;
-        if (eewData.type == "cea-bot") {
-            ceaRun(eewData.data);
-        } else if (eewData.type == "icl-bot" || eewData.type == "icl-official") {
-            iclRun(eewData.data, eewData.type);
-        } else if (eewData.type == "cea-error") {
-            if (timeCs) {
-                timeCs = false;
-                justTimeColor();
-            }
-            console.error(eewData.data);
-        }
-    };
-    const ceaRun = (eewData) => {
-        let {
-            shockTime: timeCEA,
-            placeName: centerCEA,
-            latitude: latCEA,
-            longitude: lonCEA,
-            magnitude: zhenjiCEA,
-            depth: depCEA,
-            updateAt: currentUpdateAt,
-            updates: whatbaoCEA
-        } = eewData.Data;
-        if (lastUpdateAtCea !== currentUpdateAt || whatbaoCEA !== lastUpdatesCea) {
-            console.log("[执行CEA] 调用eew"); // 打印调用信息
-            lastUpdateAtCea = currentUpdateAt;
-            lastUpdatesCea = whatbaoCEA;
-            depCEA = depCEA ?? 0;
-            eew("cea", timeCEA, centerCEA, latCEA, lonCEA, Number(zhenjiCEA), whatbaoCEA, null, depCEA);
-        }
-        if (!timeCs) {
-            timeCs = true;
-            justTimeColor();
-        }
-    };
+// 维护CENC历史事件列表
+let cencEventList = [];
+
+// 处理中国地震台网数据
+function processCencData(data) {
+    if (!data) return;
+    
+    // 如果是数组（来自cenclist_response），直接更新列表
+    if (Array.isArray(data)) {
+        cencEventList = data;
+        displayCencList();
+        return;
+    }
+    
+    // 如果是单个对象（来自update），检查是否已存在
+    const existingIndex = cencEventList.findIndex(item => item.id === data.id);
+    if (existingIndex !== -1) {
+        // 更新现有事件
+        cencEventList[existingIndex] = data;
+    } else {
+        // 添加新事件到列表开头
+        cencEventList.unshift(data);
+    }
+    
+    // 保持最多50个事件
+    if (cencEventList.length > 50) {
+        cencEventList.pop();
+    }
+    
+    // 使用修改后的cencRun逻辑显示列表
+    displayCencList();
 }
 
-function iclRun(json, type) {
-    // 检查输入参数是否有效
-    if (!json || typeof type !== "string") {
-        console.error("[执行ICL] 参数无效"); // 如果参数无效，打印错误信息
-        return; // 结束函数执行
+// 显示CENC地震列表
+function displayCencList() {
+    if (!cencEventList || cencEventList.length === 0) {
+        console.log("[displayCencList] cencEventList为空");
+        return;
+    }
+    
+    console.log(`[displayCencList] 开始处理 ${cencEventList.length} 个事件`);
+    
+    // 清除旧的标记和弹窗
+    if (cencMarkers) {
+        cencMarkers.setMap(null);
+        cencMarkers = null;
+        cencPopups.forEach(popup => popup.destroy());
+        cencPopups = [];
     }
 
-    // 定义一个内部函数来处理ICL数据
-    const processData = (data) => {
-        // 从数据中解构出需要的属性
-        const {
-            startAt: timeICL, // 地震发生时间
-            epicenter: centerICL, // 震中
-            latitude: latICL, // 纬度
-            longitude: lonICL, // 经度
-            magnitude: zhenjiICL, // 震级
-            updates: whatbaoICL, // 更新信息
-            depth: depICL, // 震源深度
-            updateAt: currentUpdateAt // 数据更新时间
-        } = data;
+    // 清空现有列表并重新生成
+    const container = $("#cencList");
+    container.empty();
+    
+    // 动态生成列表元素
+    for (let i = 1; i <= cencEventList.length; i++) {
+        const listBarHTML = `
+            <div id="list_Bar${i}" class="listBar">
+                <span class="listTime" id="listTime${i}">01月01日 00:00</span>
+                <span class="listDistance" id="listDistance${i}">距离:100km</span>
+                <span class="listEpicenter" id="listEpicenter${i}">载入中</span>
+                <span class="listType" id="listType${i}">坤坤测定</span>
+                <span class="listMagnitude" id="listMagnitude${i}">M0.0</span>
+                <span class="listDepth" id="listDepth${i}">深度:10Km</span>
+                <div class="listMaxInt" id="listMaxInt${i}">-</div>
+            </div>`;
+        container.append(listBarHTML);
+    }
 
-        // 如果当前更新时间与上次更新时间不同，说明有新数据
-        if (currentUpdateAt !== lastUpdateAt || whatbaoICL !== lastUpdates) {
-            console.log(`[执行ICL] ${type == "bot" ? "auto" : "official"}调用eew`); // 打印调用信息
-            lastUpdateAt = currentUpdateAt; // 更新上次更新的时间戳
-            lastUpdates = whatbaoICL;
-            eew("icl", timeICL, centerICL, latICL, lonICL, zhenjiICL, whatbaoICL, null, depICL); // 调用eew函数
-        }
-        if (!timeCs) {
-            timeCs = true;
-            justTimeColor();
-        }
-    };
+    const cencGeometries = [];
 
-    // 根据类型处理不同的数据
-    if (type == "icl-bot") processData(json.Data);
-    else if (type == "icl-official") processData(json.data[0]);
-    else console.error("[执行ICL] 类型不对？不可能吧？");
-}
-
-$(document).ready(() => {
-    getAllData();
-    if (ohcil) startCEEWNDataFetching();
-    else console.warn("这是开源版本，不包含中国地震预警网信息源。");
-});
-
-const clickHandlers = {};
-function cencRun(json) {
-    const cencmd5 = json.No1.ReportTime;
-    if (cencmd5 !== cencmd51) {
-        cencmd51 = cencmd5;
-
-        // 清除旧的标记和弹窗
-        if (cencMarkers) {
-            cencMarkers.setMap(null);
-            cencMarkers = null;
-            cencPopups.forEach(popup => popup.destroy());
-            cencPopups = [];
-        }
-
-        const cencGeometries = [];
-
-        for (let i = 1; i <= 50; i++) {
-            const data = json[`No${i}`];
+    for (let i = 0; i < cencEventList.length; i++) {
+        try {
+            const data = cencEventList[i];
+            
             const {
-                type,
+                infoTypeName: type,
                 depth,
-                location,
+                placeName: location,
                 magnitude,
                 latitude,
                 longitude,
-                time
+                shockTime: time
             } = data;
+            
+            // 处理infoTypeName可能包含换行和空格的情况
+            const cleanType = type ? type.replace(/\s+/g, "").trim() : "正式测定";
             const listMaxInt = calcMaxInt(magnitude, depth, location);
             const listMaxInt2 = Math.floor(listMaxInt);
             const listDistance = Math.floor(getDistance(latitude, longitude, homeLat, homeLon));
-            const listType = type === "automatic" ? "自动测定" : "正式测定";
+            const listType = cleanType === "[自动测定]" ? "自动测定" : "正式测定";
 
-            calclistEpicenterTopSize(location, i);
-            $(`#listDistance${i}`).text(`${listDistance}km`);
-            $(`#listDepth${i}`).text(`深度:${depth}km`);
-            $(`#listEpicenter${i}`).text(location);
+            const displayIndex = i + 1;
+            
+            // 检查元素是否存在
+            const listBar = document.getElementById(`list_Bar${displayIndex}`);
+            if (!listBar) {
+                console.warn(`[displayCencList] 元素 list_Bar${displayIndex} 不存在，跳过`);
+                continue;
+            }
+            
+            calclistEpicenterTopSize(location, displayIndex);
+            $(`#listDistance${displayIndex}`).text(`${listDistance}km`);
+            $(`#listDepth${displayIndex}`).text(`深度:${depth}km`);
+            $(`#listEpicenter${displayIndex}`).text(location);
             const magColor = getMagnitudeColor(magnitude);
-            $(`#listMagnitude${i}`).text(`M${magnitude}`).css("color", magColor);
+            $(`#listMagnitude${displayIndex}`).text(`M${magnitude}`).css("color", magColor);
             const thisbggcolor = intColor[listMaxInt2].oright;
-            $(`#listMaxInt${i}`).text(listMaxInt2).css({
+            $(`#listMaxInt${displayIndex}`).text(listMaxInt2).css({
                 "background-color": intColor[listMaxInt2].backgroundColor,
                 "color": intColor[listMaxInt2].color,
                 "border": `3px solid ${thisbggcolor}`
             });
             const listTimeDisply = cencTimeDisply(time);
-            $(`#listTime${i}`).text(listTimeDisply);
-            const listBar = document.getElementById(`list_Bar${i}`);
+            $(`#listTime${displayIndex}`).text(listTimeDisply);
 
-            listBar.style.border = (i === 1 ? "2px solid " : "1px solid ") + thisbggcolor;
-            if (clickHandlers[`No${i}`]) listBar.removeEventListener("click", clickHandlers[`No${i}`]);
-            clickHandlers[`No${i}`] = createClickHandler(new TMap.LatLng(latitude, longitude));
-            listBar.addEventListener("click", clickHandlers[`No${i}`]);
+            listBar.style.border = (displayIndex === 1 ? "2px solid " : "1px solid ") + thisbggcolor;
+            if (clickHandlers[`No${displayIndex}`]) listBar.removeEventListener("click", clickHandlers[`No${displayIndex}`]);
+            clickHandlers[`No${displayIndex}`] = createClickHandler(new TMap.LatLng(latitude, longitude));
+            listBar.addEventListener("click", clickHandlers[`No${displayIndex}`]);
 
-            if (i === 1) handleFirstItem(listType, time, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt);
-            else $(`#listType${i}`).text(`No.${i}`);
+            if (displayIndex === 1) handleFirstItem(data.id, listType, time, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt);
+            else $(`#listType${displayIndex}`).text(`No.${displayIndex}`);
 
-            const popup = createPopup(i, thisbggcolor, listType, time, location, latitude, longitude, magnitude, depth, listMaxInt);
+            const popup = createPopup(displayIndex, thisbggcolor, listType, time, location, latitude, longitude, magnitude, depth, listMaxInt);
             cencPopups.push(popup);
 
             const cencGeo = {
-                "id": `cencMarker_${i}`,
-                "styleId": `cencStyle${i <= 3 ? i : ""}`,
+                "id": `cencMarker_${displayIndex}`,
+                "styleId": `cencStyle${displayIndex <= 3 ? displayIndex : ""}`,
                 "position": new TMap.LatLng(latitude, longitude),
                 "properties": {
                     "title": "cencMarker"
                 }
             };
             cencGeometries.push(cencGeo);
+        } catch (error) {
+            console.error(`[displayCencList] 处理第 ${i+1} 个事件时出错:`, error);
+        }
+    }
+    
+    // 创建所有标记
+    if (cencGeometries.length > 0) {
+        cencMarkers = new TMap.MultiMarker({
+            map: map,
+            styles: cencstyle,
+            geometries: cencGeometries
+        }).on("click", function (e) {
+            const index = cencGeometries.findIndex(g => g.id === e.geometry.id);
+            if (index !== -1) cencPopups[index].open();
+        });
+    }
+    
+    console.log(`[displayCencList] 完成，共处理 ${cencGeometries.length} 个标记`);
+}
 
-            if (i === 50) {
-                cencMarkers = new TMap.MultiMarker({
-                    map: map,
-                    styles: cencstyle,
-                    geometries: cencGeometries
-                }).on("click", function (e) {
-                    const index = cencGeometries.findIndex(g => g.id === e.geometry.id);
-                    if (index !== -1) cencPopups[index].open();
-                });
-            }
+// 处理中国地震预警网数据
+function processCeaData(data) {
+    if (!data) return;
+    const {
+        shockTime: timeCEA,
+        placeName: centerCEA,
+        latitude: latCEA,
+        longitude: lonCEA,
+        magnitude: zhenjiCEA,
+        updates: whatbaoCEA
+    } = data;
+    let depCEA = data.depth ?? 0;
+    const currentUpdateAt = data.id;
+    if (lastUpdateAtCea !== currentUpdateAt || whatbaoCEA !== lastUpdatesCea) {
+        console.log("[执行CEA] 调用eew");
+        lastUpdateAtCea = currentUpdateAt;
+        lastUpdatesCea = whatbaoCEA;
+        eew("cea", timeCEA, centerCEA, latCEA, lonCEA, Number(zhenjiCEA), whatbaoCEA, null, depCEA);
+    }
+    if (!timeCs) {
+        timeCs = true;
+        justTimeColor();
+    }
+}
+
+// 处理台湾气象署地震预警数据
+function processCwaEewData(data) {
+    if (!data) return;
+    const {
+        shockTime: timeTaiwan,
+        placeName: centerTaiwan,
+        latitude: latTaiwan,
+        longitude: lonTaiwan,
+        magnitude: zhenjiTaiwan,
+        depth: depTaiwan,
+        updates: whatbaoTaiwan
+    } = data;
+    eew("cwa_eew", timeTaiwan, centerTaiwan, latTaiwan, lonTaiwan, zhenjiTaiwan, whatbaoTaiwan, null, depTaiwan);
+}
+
+// 处理日本气象厅地震预警数据
+function processJmaData(data) {
+    if (!data) return;
+    const {
+        shockTime: timeJP,
+        placeName: centerJP,
+        latitude: latJP,
+        longitude: lonJP,
+        magnitude: zhenjiJP,
+        depth: depJP,
+        updates: whatbaoJP,
+        epiIntensity: maxIntJP,
+        final: isFinalJP,
+        cancel: isCancelJP
+    } = data;
+    
+    // 根据原有逻辑处理JMA数据
+    if (scSta || twSta) {
+        eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, null, isCancelJP, isFinalJP);
+    } else {
+        eew("jma_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
+        eewToastr(true, null, centerJP, null, null, null, null, depJP, null, null, null, null);
+        if (isCancelJP) {
+            eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, null, isCancelJP, isFinalJP);
+            eewCancel();
         }
     }
 }
+
+
+
+$(document).ready(() => {
+    getAllData();
+});
+
+const clickHandlers = {};
 
 function createClickHandler(listCoor) {
     return function () {
@@ -845,12 +861,13 @@ function getMagnitudeColor(magnitude) {
     return "#f7455c";
 }
 
-function handleFirstItem(listType, listTime, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt) {
+function handleFirstItem(eventId, listType, listTime, listTimeDisply, location, latitude, longitude, magnitude, depth, listMaxInt) {
     $("#listType1").text(listType);
     if (!oneAudio) {
         oneAudio = true;
         showCustomNotification("📩 通知已开启", "如果看到此信息，表明预警信息推送已开启。");
-    } else {
+    } else if (eventId && !spokenEventIds.has(eventId)) {
+        spokenEventIds.add(eventId);
         audioCENC.play();
         const cencType = `中国地震台网 ${listType}`;
         const cencShow = `${listTimeDisply} 在 ${location} 发生${magnitude}级地震，震源深度${depth}km，预估最大烈度${listMaxInt}度`;
@@ -963,12 +980,24 @@ function formatDateTime(dateObj, format) {
 }
 
 function timeaddz(time, z) {
-    // 仅匹配一个特定的wolfx时间格式 YYYY/MM/DD HH:MM:SS
-    return time.replace(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}:\d{2})/, `\$1-\$2-\$3T\$4+0${z}:00`);
+    if (!time) return null;
+    
+    // 将 YYYY/MM/DD 或 YYYY-MM-DD 格式统一转换为 YYYY-MM-DD
+    let isoTime = time.replace(/\//g, "-");
+    
+    // 确保格式是 YYYY-MM-DD HH:mm:ss
+    const match = isoTime.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}:\d{2})$/);
+    if (!match) return null;
+    
+    // 转换为标准 ISO 8601 格式：在日期和时间之间添加 T
+    const [, year, month, day, timePart] = match;
+    return `${year}-${month}-${day}T${timePart}+0${z}:00`;
 }
 
 function cencTimeDisply(cenctime) {
-    let dateObj = new Date(timeaddz(cenctime, 8));
+    const timeObj = timeaddz(cenctime, 8);
+    if (!timeObj) return "";
+    let dateObj = new Date(timeObj);
     return formatDateTime(dateObj, "MM月DD日 hh:mm");
 }
 
@@ -993,10 +1022,42 @@ function currentTimeDisplay(timestamp) {
     return formatDateTime(dateObj, "YYYY/MM/DD hh:mm:ss");
 }
 
-function getCurrentTime() {
-    currentTimestamp = Date.now() - delta + 1000;
-    let date_str = currentTimeDisplay(currentTimestamp);
-    document.getElementById("serverTime").innerText = date_str;
+/**
+ * 更新右下角时间显示
+ */
+function updateTime() {
+    // 计算当前显示时间（应用时区偏移）
+    const dateObj = new Date(Date.now() - nowCNtimeStamp.ndDelta);
+    nowCNtimeStamp.CST = dateObj.getTime();
+    currentTimestamp = nowCNtimeStamp.CST;
+
+    // 格式化时间
+    const fullTimeString = formatDateTime(dateObj, "YYYY/MM/DD hh:mm:ss");
+    document.getElementById("serverTime").innerText = fullTimeString;
+
+    if (!hasSwitched) {
+        const ms = dateObj.getMilliseconds();
+        if (ms <= 99) {
+            if (fastIntervalId) {
+                clearInterval(fastIntervalId);
+                fastIntervalId = null;
+            }
+
+            fastIntervalId = setInterval(updateTime, 1000);
+            hasSwitched = true;
+
+            console.log(`[时间精度控制] ${fullTimeString}`);
+        }
+    }
+}
+
+function startTimeInterval() {
+    if (fastIntervalId) {
+        clearInterval(fastIntervalId);
+        fastIntervalId = null;
+        hasSwitched = false;
+    }
+    fastIntervalId = setInterval(updateTime, 100);
 }
 
 function calclistEpicenterTopSize(epicenter, locate) {
@@ -1019,9 +1080,11 @@ const closeCencPopups = () => {
 };
 
 function eewToastr(warn, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP) {
-    timeJP = new Date(timeaddz(timeJP, 9)).getTime();
-    if (currentTimestamp - timeJP > 300000) return;
-    timeJP = eewTimeDisplay("bf_eew", timeJP);
+    const timeObj = timeaddz(timeJP, 9);
+    if (!timeObj) return;
+    const timeTimestamp = new Date(timeObj).getTime();
+    if (currentTimestamp - timeTimestamp > 300000) return;
+    timeJP = eewTimeDisplay("bf_eew", timeTimestamp);
 
     if (!warn) {
         const reportType = isFinalJP ? `最终第${whatbaoJP}报` : isCancelJP ? `取消第${whatbaoJP}报` : `第${whatbaoJP}报`;
@@ -1098,8 +1161,14 @@ function vceewcd(distance, depth, cd) {
 
 // 本预警函数特地典型使用中文变量名，清晰易懂awa
 function eew(类型, 发震时间, 震中, lat, lon, 震级, 多少报, 最大烈度, 深度 = null, 最终 = null, isOneCENC = true) {
-    if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") 发震时间 = new Date(timeaddz(发震时间, 8)).getTime();
-    else if (类型 == "jma_eew" || 类型 == "jma_tw_eew") 发震时间 = new Date(timeaddz(发震时间, 9)).getTime();
+    if (类型 !== "icl" && 类型 !== "jma_eew" && 类型 !== "jma_tw_eew") {
+        const timeObj = timeaddz(发震时间, 8);
+        if (timeObj) 发震时间 = new Date(timeObj).getTime();
+    } else if (类型 == "jma_eew" || 类型 == "jma_tw_eew") {
+        const timeObj = timeaddz(发震时间, 9);
+        if (timeObj) 发震时间 = new Date(timeObj).getTime();
+    }
+    
     let 时差 = currentTimestamp - 发震时间;
     console.log(`[eew] 时差 => ${时差}`);
 
@@ -1796,3 +1865,9 @@ function tts(biaoti, location, magnitude, cenc = null) {
     };
     window.speechSynthesis.speak(utterance);
 }
+
+// 页面可见性监听器，用于控制时间同步
+document.addEventListener("visibilitychange", () => {
+    isPageVisible = !document.hidden;
+    console.log("[时间同步] 页面可见性:", isPageVisible);
+});

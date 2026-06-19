@@ -19,19 +19,6 @@
     <script type="text/javascript">
         $(document).ready(function() {
           const container = $("#cencList");
-          for (let i = 1; i <= 50; i++) {
-            const listBarHTML = `
-        					<div id="list_Bar${i}" class="listBar">
-        						<span class="listTime" id="listTime${i}">01月01日 00:00</span>
-        						<span class="listDistance" id="listDistance${i}">距离:100km</span>
-        						<span class="listEpicenter" id="listEpicenter${i}">载入中</span>
-        						<span class="listType" id="listType${i}">坤坤测定</span>
-        						<span class="listMagnitude" id="listMagnitude${i}">M0.0</span>
-        						<span class="listDepth" id="listDepth${i}">深度:10Km</span>
-        						<div class="listMaxInt" id="listMaxInt${i}">-</div>
-        					</div>`;
-            container.append(listBarHTML);
-          }
         
           function handleMouseMove(e) {
             const rect = this.getBoundingClientRect();
