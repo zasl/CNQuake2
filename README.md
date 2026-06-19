@@ -42,7 +42,9 @@
 由于此软件造成的任何人力物力财力等损失与作者无关
 
 ## API 源 使用
-[Wolfx 防灾API](https://wolfx.jp/apidoc)
+~~[Wolfx 防灾API](https://wolfx.jp/apidoc)~~
+在25H1后更换为
+[某人的 API](https://api.fanstudio.tech/)
 
 ## License
 
