@@ -1,4 +1,4 @@
-[简体中文](README.md) | **English**
+[简体中文](README.md) | [繁體中文](README-TW.md) | **English**
 
 <div align="center">
 
@@ -14,10 +14,6 @@
 [Submit Issue](https://github.com/liujh5913/CNQuake2/issues/new)
 
 </div>
-
----
-
-## 📖 Project Introduction
 
 CNQuake2 is a [`PWA`](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) application built with modern Web technologies for visualizing earthquake information in China. It provides real-time earthquake early warnings, historical earthquake queries, seismic wave visualization, and more.
 
@@ -59,7 +55,8 @@ This application must run in an **HTTPS** environment with a properly configured
 
 Since 25H1, this project's warning data source has been switched to **FAN Studio - API** (`https://api.fanstudio.tech/`). This interface was selected based on measured performance in domestic network environments, offering advantages in response latency and connection stability to better ensure the timeliness of warning information.
 
-⚠️ Any third-party data service may change. This project's data source selection always follows technical adaptation principles, with actual operational performance as the sole measure. If this interface experiences service quality fluctuations or availability changes in the future, the project will evaluate and adjust the data source configuration as appropriate to ensure continued service reliability.
+> [!WARNING]
+> Any third-party data service may change. This project's data source selection always follows technical adaptation principles, with actual operational performance as the sole measure. If this interface experiences service quality fluctuations or availability changes in the future, the project will evaluate and adjust the data source configuration as appropriate to ensure continued service reliability.
 
 ## 📜 Disclaimer
 
