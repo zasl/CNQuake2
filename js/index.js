@@ -870,19 +870,39 @@ function processJmaData(data) {
         updates: whatbaoJP,
         epiIntensity: maxIntJP,
         final: isFinalJP,
-        cancel: isCancelJP
+        cancel: isCancelJP,
+        infoTypeName: biaotiJP
     } = data;
+
+    // 判断是否为预警（予報为预报，不是预警）
+    const isWarnJP = biaotiJP !== "予報";
+
+    // 处理取消预警的公共逻辑
+    function handleCancelJP() {
+        eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
+        eewCancel();
+    }
 
     // 根据原有逻辑处理JMA数据
     if (scSta || twSta) {
-        eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, null, isCancelJP, isFinalJP);
-    } else {
-        eew("jma_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
-        eewToastr(true, null, centerJP, null, null, null, null, depJP, null, null, null, null);
+        eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
+    } else if (isWarnJP) {
         if (isCancelJP) {
-            eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, null, isCancelJP, isFinalJP);
-            eewCancel();
+            handleCancelJP();
+        } else {
+            eew("jma_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
+            eewToastr(true, null, centerJP, null, null, null, null, depJP, null, null, null, null);
         }
+    } else if (warnJPcenters.includes(centerJP)) {
+        centerJP = centerJP == "宮古島近海" ? "琉球群岛附近" : "中国台湾附近";
+        if (isCancelJP) {
+            handleCancelJP();
+        } else {
+            eew("jma_tw_eew", timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, maxIntJP, depJP, isFinalJP);
+            eewToastr(true, timeJP, centerJP, null, null, null, null, depJP, null, null, null, null);
+        }
+    } else {
+        eewToastr(false, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP);
     }
 }
 
