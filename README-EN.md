@@ -21,7 +21,7 @@ If the content of this project infringes upon your rights, please contact us via
 
 ## 🚀 Running Notes
 
-This application must run in an **HTTPS** environment with a properly configured SSL certificate. Due to Tencent Maps CORS cross-origin policy restrictions, please do not open it directly using the `file://` protocol, otherwise the map icons will fall back to the default Marker style. Additionally, PWA installation and Service Worker notification push features are only available in a secure context.
+This application must run in an **HTTPS** environment with a properly configured SSL certificate. Due to Tencent Maps CORS cross-origin policy restrictions, please do not open it directly using the `file://` protocol, otherwise the map icons will fall back to the default Marker style.
 
 ## 💻 Supported Platforms
 
