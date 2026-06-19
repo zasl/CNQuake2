@@ -1076,7 +1076,9 @@ function easeTo() {
 }
 
 const closeCencPopups = () => {
-    for (i = 0; i < 50; i++) cencPopups[i].close();
+    cencPopups.forEach(popup => {
+        if (popup) popup.close();
+    });
 };
 
 function eewToastr(warn, timeJP, centerJP, latJP, lonJP, zhenjiJP, whatbaoJP, depJP, maxIntJP, biaotiJP, isCancelJP, isFinalJP) {
