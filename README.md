@@ -1,27 +1,27 @@
-**简体中文** | [English](README-EN.md)
+**简体中文** | [繁體中文](README-TW.md) | [English](README-EN.md)
 
 <div align="center">
-    <img src="img/icon512.png" alt="Logo" width="80" height="80">
+
+<img src="img/icon512.png" alt="Logo" width="80" height="80">
     
-    # CNQuake2
+# CNQuake2
     
-    基于 HTML、JavaScript 与 CSS 构建的中国地震信息可视化 PWA 应用
+[![Stars](https://img.shields.io/github/stars/liujh5913/CNQuake2?style=flat&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTTggLjI1YS43NS43NSAwIDAgMSAuNjczLjQxOGwxLjg4MiAzLjgxNSA0LjIxLjYxMmEuNzUuNzUgMCAwIDEgLjQxNiAxLjI3OWwtMy4wNDYgMi45Ny43MTkgNC4xOTJhLjc1MS43NTEgMCAwIDEtMS4wODguNzkxTDggMTIuMzQ3bC0zLjc2NiAxLjk4YS43NS43NSAwIDAgMS0xLjA4OC0uNzlsLjcyLTQuMTk0TC44MTggNi4zNzRhLjc1Ljc1IDAgMCAxIC40MTYtMS4yOGw0LjIxLS42MTFMNy4zMjcuNjY4QS43NS43NSAwIDAgMSA4IC4yNVoiIGZpbGw9IiNlYWM1NGYiLz48L3N2Zz4=&logoSize=auto&label=stars&labelColor=444444&color=eac54f)](https://github.com/liujh5913/CNQuake2/)
+[![哔哩哔哩](https://img.shields.io/badge/动态-bilibili-00A4DB?style=flat&labelColor=444444&logo=bilibili)](https://space.bilibili.com/3493093166811354/dynamic)
+[![Issues](https://img.shields.io/github/issues/liujh5913/CNQuake2?style=flat&label=issues&labelColor=444444&color=1F883D&logo=github)](https://github.com/liujh5913/CNQuake2/issues)
+[![License](https://img.shields.io/github/license/liujh5913/CNQuake2?style=flat&labelColor=444444&color=blue)](LICENSE) <br />
     
-    [![Stars](https://img.shields.io/github/stars/liujh5913/CNQuake2?style=flat&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTTggLjI1YS43NS43NSAwIDAgMSAuNjczLjQxOGwxLjg4MiAzLjgxNSA0LjIxLjYxMmEuNzUuNzUgMCAwIDEgLjQxNiAxLjI3OWwtMy4wNDYgMi45Ny43MTkgNC4xOTJhLjc1MS43NTEgMCAwIDEtMS4wODguNzkxTDggMTIuMzQ3bC0zLjc2NiAxLjk4YS43NS43NSAwIDAgMS0xLjA4OC0uNzlsLjcyLTQuMTk0TC44MTggNi4zNzRhLjc1Ljc1IDAgMCAxIC40MTYtMS4yOGw0LjIxLS42MTFMNy4zMjcuNjY4QS43NS43NSAwIDAgMSA4IC4yNVoiIGZpbGw9IiNlYWM1NGYiLz48L3N2Zz4=&logoSize=auto&label=stars&labelColor=444444&color=eac54f)](https://github.com/liujh5913/CNQuake2/)
-    [![哔哩哔哩](https://img.shields.io/badge/动态-bilibili-00A4DB?style=flat&labelColor=444444&logo=bilibili)](https://space.bilibili.com/3493093166811354/dynamic)
-    [![Issues](https://img.shields.io/github/issues/liujh5913/CNQuake2?style=flat&label=issues&labelColor=444444&color=1F883D&logo=github)](https://github.com/liujh5913/CNQuake2/issues)
-    [![License](https://img.shields.io/github/license/liujh5913/CNQuake2?style=flat&labelColor=444444&color=blue)](LICENSE)
-    
-    [提交问题](https://github.com/liujh5913/CNQuake2/issues/new)
+[提交问题](https://github.com/liujh5913/CNQuake2/issues/new)
+
 </div>
 
 ---
 
 ## 📖 项目简介
 
-CNQuake2 是一个基于现代 Web 技术构建的中国地震信息可视化 PWA 应用，提供实时地震预警、历史地震查询、地震波可视化等功能。
+CNQuake2 是一个基于现代 Web 技术构建的中国地震信息可视化 [`PWA`](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps) 应用，提供实时地震预警、历史地震查询、地震波可视化等功能。
 
-如本项目内容侵犯了您的权益，请通过 [Issue](https://github.com/liujh5913/CNQuake2/issues/new) 或邮件 liujh5913@petalmail.com 联系，我们将第一时间予以处理。
+如本项目内容侵犯了您的权益，请通过 [Issue](https://github.com/liujh5913/CNQuake2/issues/new) 或邮件 liujh5913@petalmail.com 联系，我将会尽快处理。
 
 ## 🚀 运行须知
 
@@ -43,7 +43,7 @@ CNQuake2 是一个基于现代 Web 技术构建的中国地震信息可视化 PW
 
 - 支持自定义本地烈度触发阈值
 - 多地震事件并发适配
-- 重绘地震波渲染逻辑，替代官方 MultiCircle 方案，使波形更贴合地球曲面
+- 重绘地震波渲染逻辑，替代官方 [`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13) 方案，使波形更贴合地球曲面
 - 写一个现代化的设置UI界面，提供更直观的操作体验
 - **以上功能欢迎社区贡献代码**
 
@@ -57,9 +57,9 @@ CNQuake2 是一个基于现代 Web 技术构建的中国地震信息可视化 PW
 
 ~~Wolfx 防灾 API~~
 
-自 2025 H1 起，本项目预警数据源调整为 **FAN Studio - API**（`https://api.fanstudio.tech/`）。选用该接口系基于国内网络环境下的实测表现，其在响应延迟与连接稳定性方面具备一定优势，能够更好地保障预警信息的时效性。
+自 25H1 后，本项目预警数据源调整为 **FAN Studio - API**（`https://api.fanstudio.tech/`）。选用该接口系基于国内网络环境下的实测表现，其在响应延迟与连接稳定性方面具备一定优势，能够更好地保障预警信息的时效性。
 
-需要指出的是，任何第三方数据服务均可能存在变动。本项目的数据源选择始终遵循技术适配原则，以实际运行效果为唯一衡量标准。如该接口后续出现服务质量波动或可用性变化，项目将视情评估并调整数据源配置，以确保服务的持续可靠。
+⚠️ 任何第三方数据服务均可能存在变动。本项目的数据源选择始终遵循技术适配原则，以实际运行效果为唯一衡量标准。如该接口后续出现服务质量波动或可用性变化，项目将视情评估并调整数据源配置，以确保服务的持续可靠。
 
 ## 📜 免责声明
 
