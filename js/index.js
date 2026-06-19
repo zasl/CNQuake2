@@ -1,4 +1,4 @@
-const version = "v2.0.260619 SP1";
+const version = "v2.0.260620";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
