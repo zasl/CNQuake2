@@ -1,4 +1,4 @@
-const version = "v2.0.260620 SP1";
+const version = "v2.0.260620 SP2";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -1640,7 +1640,6 @@ function addIntToMap(geometries) {
 
 // 设置代码
 let settingsIcon = document.getElementById("settings-icon");
-let overlay = document.getElementById("overlay");
 let settingsBox = document.getElementById("settings-box");
 let saveButton = document.getElementById("save-settings");
 let cancelButton = document.getElementById("cancel-settings");
@@ -1648,32 +1647,32 @@ let longitudeInput = document.getElementById("longitude");
 let latitudeInput = document.getElementById("latitude");
 let locationInput = document.getElementById("location");
 
-// 点击设置图标
-settingsIcon.addEventListener("click", function () {
-    overlay.style.display = "block";
-    settingsBox.style.display = "block";
-
-    // 淡入效果
-    overlay.style.opacity = "0";
-    let fadeEffect = setInterval(function () {
-        if (overlay.style.opacity < 1) overlay.style.opacity = parseFloat(overlay.style.opacity) + 0.1;
-        else clearInterval(fadeEffect);
-    }, 50);
-
-    // 获取本地存储的设置值
+function openSettings() {
+    settingsIcon.classList.add("active");
+    settingsBox.classList.add("active");
     longitudeInput.value = localStorage.getItem("longitude");
     latitudeInput.value = localStorage.getItem("latitude");
     locationInput.value = localStorage.getItem("location");
+}
+
+function closeSettings() {
+    settingsIcon.classList.remove("active");
+    settingsBox.classList.remove("active");
+}
+
+settingsIcon.addEventListener("click", function () {
+    if (settingsBox.classList.contains("active")) {
+        closeSettings();
+    } else {
+        openSettings();
+    }
 });
 
-// 点击保存按钮
 saveButton.addEventListener("click", function () {
-    // 获取输入框的值
     let longitudeValue = longitudeInput.value.trim();
     let latitudeValue = latitudeInput.value.trim();
     let locationValue = locationInput.value.trim();
 
-    // 检查是否全部填写
     if (longitudeValue === "" || latitudeValue === "" || locationValue === "") {
         toastr.warning("请填写完整信息");
         return;
@@ -1684,7 +1683,6 @@ saveButton.addEventListener("click", function () {
         return;
     }
 
-    // 检测经纬度是否符合常规
     let longitudeFloat = parseFloat(longitudeValue);
     let latitudeFloat = parseFloat(latitudeValue);
     if (isNaN(longitudeFloat) || isNaN(latitudeFloat) || longitudeFloat < -180 || longitudeFloat > 180 ||
@@ -1693,7 +1691,6 @@ saveButton.addEventListener("click", function () {
         return;
     }
 
-    // 存储设置值到localStorage
     localStorage.setItem("longitude", longitudeValue);
     localStorage.setItem("latitude", latitudeValue);
     localStorage.setItem("location", locationValue);
@@ -1702,17 +1699,18 @@ saveButton.addEventListener("click", function () {
     homeLocte = localStorage.getItem("location");
     addHomeToMap();
     console.log(`[设置] 已设置新的家 => 纬度:${homeLat} 经度:${homeLon} 地名:${homeLocte}`);
-    // 关闭设置界面
-    overlay.style.display = "none";
-    settingsBox.style.display = "none";
+    closeSettings();
     if (eewBounds) location.reload();
 });
 
-// 点击取消按钮
 cancelButton.addEventListener("click", function () {
-    // 关闭设置界面
-    overlay.style.display = "none";
-    settingsBox.style.display = "none";
+    closeSettings();
+});
+
+document.addEventListener("click", function (event) {
+    if (!event.target.closest("#settings-container")) {
+        closeSettings();
+    }
 });
 
 function addHomeToMap() {
