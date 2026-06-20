@@ -1,4 +1,4 @@
-const version = "v2.0.260620";
+const version = "v2.0.260620 SP1";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -472,9 +472,25 @@ class HEQC {
         return fArr3[i3] + ((fArr3[i4] - fArr3[i3]) * ((distance - fArr2[i3]) / (fArr2[i4] - fArr2[i3])));
     }
 }
+let socket;
+
+// 发送 ping 并记录时间，用于计算 RTT
+function sendPing() {
+    if (isPageVisible) {
+        pingTime = Date.now();
+        socket.send("ping");
+    } else {
+        console.log("[时间同步] 不在前台，跳过时间校准");
+    }
+}
 
 async function getAllData() {
-    const socket = new WebSocket("wss://ws.fanstudio.tech/all");
+    // 关闭并清理旧的 socket 连接，避免内存泄漏和重复事件监听
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
+    socket = new WebSocket("wss://ws.fanstudio.tech/all");
 
     socket.addEventListener("open", (allOpen) => {
         // 重置状态
@@ -484,9 +500,9 @@ async function getAllData() {
         console.log("[WebSocket消息] 已连接到 WebSocket.");
         toastr.success("已连接到 WebSocket.");
 
-        setTimeout(() => {
-            socket.send("query");
-        }, 2000)
+        // setTimeout(() => {
+        //     socket.send("query");
+        // }, 2000)
 
     });
 
@@ -498,12 +514,7 @@ async function getAllData() {
         if (json.type == "heartbeat") {
             // heartbeat 只用于保持连接活跃，不用于计算 RTT
             // 收到 heartbeat 后发送 ping
-            if (isPageVisible) {
-                pingTime = Date.now();
-                socket.send("ping");
-            } else {
-                console.log("[时间同步] 不在前台，跳过时间校准");
-            }
+            sendPing();
         }
 
         // 处理 pong 响应（用于计算真实的 RTT）
@@ -573,10 +584,12 @@ async function getAllData() {
             if (json.jma && json.jma.Data) {
                 processJmaData(json.jma.Data);
             }
+            sendPing();
         }
 
         // 处理增量更新
         if (json.type == "update") {
+            sendPing();
             const source = json.source;
             const data = json.Data;
 
@@ -620,29 +633,29 @@ async function getAllData() {
             }
         }
 
-        // 处理query_response（与initial_all相同结构）
-        if (json.type == "query_response") {
-            // 处理CENC预警数据（单个最新事件，用于预警）
-            if (json.cenc && json.cenc.Data) {
-                const cencData = json.cenc.Data;
-                if (cencData && !Array.isArray(cencData)) {
-                    // 单个预警事件
-                    eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, "正式测定", null, cencData.depth, null);
-                }
-            }
-            // 处理CEA数据
-            if (json.cea && json.cea.Data) {
-                processCeaData(json.cea.Data);
-            }
-            // 处理CWA-EEW数据
-            if (json["cwa-eew"] && json["cwa-eew"].Data) {
-                processCwaEewData(json["cwa-eew"].Data);
-            }
-            // 处理JMA数据
-            if (json.jma && json.jma.Data) {
-                processJmaData(json.jma.Data);
-            }
-        }
+        // // 处理query_response（与initial_all相同结构）
+        // if (json.type == "query_response") {
+        //     // 处理CENC预警数据（单个最新事件，用于预警）
+        //     if (json.cenc && json.cenc.Data) {
+        //         const cencData = json.cenc.Data;
+        //         if (cencData && !Array.isArray(cencData)) {
+        //             // 单个预警事件
+        //             eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, "正式测定", null, cencData.depth, null);
+        //         }
+        //     }
+        //     // 处理CEA数据
+        //     if (json.cea && json.cea.Data) {
+        //         processCeaData(json.cea.Data);
+        //     }
+        //     // 处理CWA-EEW数据
+        //     if (json["cwa-eew"] && json["cwa-eew"].Data) {
+        //         processCwaEewData(json["cwa-eew"].Data);
+        //     }
+        //     // 处理JMA数据
+        //     if (json.jma && json.jma.Data) {
+        //         processJmaData(json.jma.Data);
+        //     }
+        // }
     });
 
     socket.addEventListener("error", (allError) => {
