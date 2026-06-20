@@ -40,7 +40,6 @@ CNQuake2 是一个基于现代 Web 技术构建的中国地震信息可视化 [`
 - 支持自定义本地烈度触发阈值
 - 多地震事件并发适配
 - 重绘地震波渲染逻辑，替代官方 [`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13) 方案，使波形更贴合地球曲面
-- 写一个现代化的设置UI界面，提供更直观的操作体验
 - **以上功能欢迎社区贡献代码**
 
 ## ⚠️ 已知问题

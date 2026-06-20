@@ -40,7 +40,6 @@ This application must run in an **HTTPS** environment with a properly configured
 - Support for custom local intensity trigger thresholds
 - Multi-earthquake event concurrent adaptation
 - Redraw seismic wave rendering logic, replacing the official [`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13) solution to make waveforms better fit the Earth's curved surface
-- Build a modern settings UI for a more intuitive operation experience
 - **Community contributions for the above features are welcome**
 
 ## ⚠️ Known Issues
