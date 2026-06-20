@@ -1,4 +1,4 @@
-const version = "v2.0.260620 SP2";
+const version = "v2.0.260620 SP3";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -1153,7 +1153,24 @@ function calclistEpicenterTopSize(epicenter, locate) {
     epicenter.length >= 12 ? $("#listEpicenter" + locate).css("top", "23px") : $("#listEpicenter" + locate).css("top", "26px");
 }
 
+// 隐藏 tooltip 并在鼠标离开按钮后恢复 hover 效果
+function hideTooltipAndReset(button) {
+    const tooltip = button.nextElementSibling;
+    if (tooltip && tooltip.classList.contains('main-tooltip')) {
+        tooltip.style.opacity = '0';
+        tooltip.style.visibility = 'hidden';
+        
+        // 鼠标离开按钮后清除内联样式，让 CSS hover 重新生效
+        button.addEventListener('mouseleave', function resetTooltip() {
+            tooltip.style.opacity = '';
+            tooltip.style.visibility = '';
+            button.removeEventListener('mouseleave', resetTooltip);
+        }, { once: true });
+    }
+}
+
 function easeTo() {
+    hideTooltipAndReset(document.getElementById('set-EaseTo'));
     if (!eewBounds) {
         map.easeTo({
             center: new TMap.LatLng(37.093496518166944, 107.79942839007867),
@@ -1165,6 +1182,7 @@ function easeTo() {
 }
 
 const closeCencPopups = () => {
+    hideTooltipAndReset(document.getElementById('cencPopupsclose'));
     cencPopups.forEach(popup => {
         if (popup) popup.close();
     });
@@ -1661,6 +1679,7 @@ function closeSettings() {
 }
 
 settingsIcon.addEventListener("click", function () {
+    hideTooltipAndReset(settingsIcon);
     if (settingsBox.classList.contains("active")) {
         closeSettings();
     } else {

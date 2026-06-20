@@ -1,22 +1,15 @@
+/* 鸿蒙黑体 - 可变字体 */
 @font-face {
-    font-family: "H-M";
-    src: url("../fonts/HarmonyOS_SansSC_Medium.woff2") format("woff2");
+    font-family: "鸿蒙黑体";
+    src: url("../fonts/HarmonyOS_Sans_SC.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
 }
 
-*,
-*:after,
-*:before {
-    box-sizing: border-box;
-}
-
+/* Manrope ExtraBold */
 @font-face {
-    font-family: "H-B";
-    src: url("../fonts/HarmonyOS_SansSC_Bold.woff2") format("woff2");
-}
-
-@font-face {
-    font-family: "M-B";
-    src: url("../fonts/manrope-extrabold-3.woff") format("woff");
+    font-family: "M-EB";
+    src: url("../fonts/Manrope-ExtraBold.woff2") format("woff2");
 }
 
 @keyframes fade {
@@ -44,7 +37,8 @@ html,
 body {
     position: relative;
     background-color: #242424;
-    font-family: "H-M", sans-serif;
+    font-family: "鸿蒙黑体", sans-serif;
+    font-weight: 500;
     height: 100%;
     width: 100%;
     margin: 0;
@@ -143,7 +137,8 @@ body {
     color: white;
     font-size: 21px;
     z-index: 100;
-    font-family: "H-B";
+    font-family: "鸿蒙黑体";
+    font-weight: 700;
     text-shadow: 1px 1px 2px black;
 }
 
@@ -154,7 +149,8 @@ body {
     color: white;
     font-size: 12px;
     z-index: 100;
-    font-family: "H-B";
+    font-family: "鸿蒙黑体";
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -248,7 +244,7 @@ body {
     border-radius: 10px;
     text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     font-size: 35px;
-    font-family: "M-B";
+    font-family: "M-EB";
     text-align: center;
     line-height: 54px;
 }
@@ -259,7 +255,8 @@ body {
     border-radius: 7px;
     color: #fff;
     font-size: 15px;
-    font-family: "H-M";
+    font-family: "鸿蒙黑体";
+    font-weight: 500;
     line-height: 0.40;
     text-align: left;
     padding: 5px
@@ -282,27 +279,122 @@ body {
 }
 
 input {
-    font-family: "H-M";
+    font-family: "鸿蒙黑体";
+    font-weight: 500;
+}
+
+#easeTo-container {
+    position: absolute;
+    left: 10px;
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    z-index: 100;
 }
 
 #set-EaseTo {
     position: absolute;
-    z-index: 100;
-    left: 10px;
-    top: 20px;
-    border-radius: 6px;
-    background-color: #444 !important;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
     color: #fff;
+    font-weight: 700;
+    border-radius: 20px;
+    box-shadow: 0 0 1.5px hsla(0, 0%, 100%, .65);
+    overflow: hidden;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(30, 36, 44, .925);
+    transition: all 0.3s ease;
+}
+
+#set-EaseTo::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: -8px;
+    right: -6px;
+    bottom: -3px;
+}
+
+#set-EaseTo:hover {
+    background-color: rgba(40, 46, 54, .925);
+}
+
+#set-EaseTo svg {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+}
+
+#set-EaseTo:hover svg {
+    opacity: 1;
+}
+
+#set-EaseTo:active svg {
+    opacity: 0.85;
+}
+
+#cencPopupsclose-container {
+    position: absolute;
+    left: 10px;
+    top: 67px;
+    width: 40px;
+    height: 40px;
+    z-index: 100;
 }
 
 #cencPopupsclose {
     position: absolute;
-    z-index: 100;
-    left: 10px;
-    top: 48px;
-    border-radius: 6px;
-    background-color: #444 !important;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
     color: #fff;
+    font-weight: 700;
+    border-radius: 20px;
+    box-shadow: 0 0 1.5px hsla(0, 0%, 100%, .65);
+    overflow: hidden;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(30, 36, 44, .925);
+    transition: all 0.3s ease;
+}
+
+#cencPopupsclose::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: -8px;
+    right: -6px;
+    bottom: -3px;
+}
+
+#cencPopupsclose:hover {
+    background-color: rgba(40, 46, 54, .925);
+}
+
+#cencPopupsclose svg {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+}
+
+#cencPopupsclose:hover svg {
+    opacity: 1;
+}
+
+#cencPopupsclose:active svg {
+    opacity: 0.85;
 }
 
 #eew_Bar {
@@ -329,7 +421,8 @@ input {
     width: 100%;
     height: auto;
     font-size: 20px;
-    font-family: "H-M";
+    font-family: "鸿蒙黑体";
+    font-weight: 500;
 }
 
 #eew_Information {
@@ -344,23 +437,27 @@ input {
 }
 
 #eew_Information b {
-    font-family: "H-B";
+    font-family: "鸿蒙黑体";
+    font-weight: 700;
 }
 
 #eew_Information p1 {
-    font-family: "H-B";
+    font-family: "鸿蒙黑体";
+    font-weight: 700;
     font-size: 19px;
 }
 
 #eew_Information p2 {
-    font-family: "H-B";
+    font-family: "鸿蒙黑体";
+    font-weight: 700;
     font-size: 17px;
 }
 
 #eew_countdown {
     position: absolute;
     font-size: 80px;
-    font-family: "H-B";
+    font-family: "鸿蒙黑体";
+    font-weight: 700;
     top: 113px;
     width: 294px;
     height: 95px;
@@ -373,7 +470,8 @@ input {
     visibility: hidden;
     position: absolute;
     font-size: 20px;
-    font-family: "H-M";
+    font-family: "鸿蒙黑体";
+    font-weight: 500;
     bottom: 40px;
     right: 5px;
 }
@@ -383,7 +481,8 @@ input {
     font-size: 20px;
     bottom: 5px;
     width: 100%;
-    font-family: "H-M";
+    font-family: "鸿蒙黑体";
+    font-weight: 500;
     text-align: center;
 }
 
@@ -414,8 +513,9 @@ input {
 #settings-container {
     position: absolute;
     left: 10px;
-    top: 75px;
+    top: 114px;
     z-index: 500;
+    height: 40px;
 }
 
 #settings-icon {
@@ -450,22 +550,29 @@ input {
     background-color: rgba(40, 46, 54, .925);
 }
 
-#settings-icon .icon,
+#settings-icon svg.icon {
+    width: 18px;
+    height: 18px;
+    color: #fff;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+#settings-icon:hover svg.icon {
+    opacity: 1;
+}
+
+#settings-icon:active svg.icon {
+    opacity: 0.85;
+}
+
 #settings-icon .close {
     width: 18px;
     height: 18px;
     position: absolute;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-#settings-icon .icon {
-    opacity: 1;
-    transform: rotate(0deg);
-}
-
-#settings-icon .close {
     opacity: 0;
     transform: rotate(-90deg);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 #settings-icon .close::before,
@@ -488,14 +595,85 @@ input {
     transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-#settings-icon.active .icon {
+#settings-icon.active svg.icon {
     opacity: 0;
     transform: rotate(90deg);
 }
 
 #settings-icon.active .close {
-    opacity: 1;
+    opacity: 0.85;
     transform: rotate(0deg);
+}
+
+#settings-icon.active:hover .close {
+    opacity: 1;
+}
+
+#settings-icon.active:active .close {
+    opacity: 0.85;
+}
+
+/* Tooltip 样式 */
+.main-tooltip {
+    position: absolute;
+    left: 51px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.8);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    will-change: transform, opacity;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    transition: transform .2s cubic-bezier(.5, 1.65, .6, 1), opacity .2s cubic-bezier(.5, 1.65, .6, 1), visibility .2s;
+    transform-origin: -9px 50%;
+}
+
+.main-tooltip .tooltip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background-color: rgba(20, 26, 34, .925);
+    filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, .65));
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
+
+.main-tooltip .tooltip .text {
+    white-space: nowrap;
+}
+
+.main-tooltip .tooltip .anchor {
+    position: absolute;
+    left: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-right: 7px solid rgba(20, 26, 34, .925);
+}
+
+#settings-icon:hover + .main-tooltip,
+#easeTo-container button:hover + .main-tooltip,
+#cencPopupsclose-container button:hover + .main-tooltip {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 设置按钮 active 状态时不显示 tooltip */
+#settings-icon.active + .main-tooltip {
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 /* 设置面板样式 */
@@ -598,7 +776,8 @@ button {
     padding: 8px 12px;
     border: none;
     border-radius: 3px;
-    font-family: "H-M";
+    font-family: "鸿蒙黑体";
+    font-weight: 500;
 }
 
 .close-icon {
@@ -630,7 +809,8 @@ button {
 
 .tmap-scale-text {
     color: #fff !important;
-    font-family: "H-B" !important;
+    font-family: "鸿蒙黑体" !important;
+    font-weight: 700 !important;
     -webkit-text-stroke: 0.3px black;
 }
 
