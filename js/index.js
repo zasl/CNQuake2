@@ -1,4 +1,4 @@
-const version = "v2.0.260620 SP3";
+const version = "v2.0.260702";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -875,7 +875,7 @@ function processJmaData(data) {
     if (!data) return;
     const {
         shockTime: timeJP,
-        placeName: centerJP,
+        placeName,
         latitude: latJP,
         longitude: lonJP,
         magnitude: zhenjiJP,
@@ -886,6 +886,7 @@ function processJmaData(data) {
         cancel: isCancelJP,
         infoTypeName: biaotiJP
     } = data;
+    let centerJP = placeName;
 
     // 判断是否为预警（予報为预报，不是预警）
     const isWarnJP = biaotiJP !== "予報";
@@ -1144,9 +1145,7 @@ function startTimeInterval() {
         fastIntervalId = null;
         hasSwitched = false;
     }
-    // 使用RTT作为更新时间间隔，确保显示精度
-    const interval = Math.max(networkRTT, 100);
-    fastIntervalId = setInterval(updateTime, interval);
+    fastIntervalId = setInterval(updateTime, 100);
 }
 
 function calclistEpicenterTopSize(epicenter, locate) {
