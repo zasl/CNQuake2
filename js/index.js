@@ -1,4 +1,4 @@
-const version = "v2.0.260702";
+const version = "v2.0.260702 SP1";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -567,7 +567,7 @@ async function getAllData() {
                 const cencData = json.cenc.Data;
                 if (cencData && !Array.isArray(cencData)) {
                     // 单个预警事件
-                    eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, "正式测定", null, cencData.depth, null);
+                    eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, cencData.infoTypeName?.replace(/[\[\]]/g, "").trim(), null, cencData.depth, null);
                     // 收到预警数据后，发送 cenclist 请求获取完整列表
                     socket.send("cenclist");
                 }
@@ -597,7 +597,7 @@ async function getAllData() {
                 case "cenc":
                     // CENC更新只用于预警，不更新列表
                     if (data && !Array.isArray(data)) {
-                        eew("cenc", data.shockTime, data.placeName, data.latitude, data.longitude, data.magnitude, "正式测定", null, data.depth, null);
+                        eew("cenc", data.shockTime, data.placeName, data.latitude, data.longitude, data.magnitude, data.infoTypeName?.replace(/[\[\]]/g, "").trim(), null, data.depth, null);
                         // 收到预警更新后，重新请求列表
                         socket.send("cenclist");
                     }
