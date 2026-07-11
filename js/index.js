@@ -1,4 +1,4 @@
-const version = "v2.0.260707";
+const version = "v2.0.260711";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -602,6 +602,18 @@ async function getAllData() {
                         setTimeout(() => {
                             socket.send("cenclist");
                         }, 5000)
+
+                        setTimeout(() => {
+                            socket.send("cenclist");
+                        }, 10000)
+
+                        setTimeout(() => {
+                            socket.send("cenclist");
+                        }, 15000)
+
+                        setTimeout(() => {
+                            socket.send("cenclist");
+                        }, 20000)
                     }
                     break;
                 case "cea":
