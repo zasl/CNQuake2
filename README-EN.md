@@ -15,6 +15,15 @@
 
 </div>
 
+> [!IMPORTANT]
+> ⚠️ **This project has stopped development and maintenance**
+>
+> Due to frequent API changes and the lack of stable available APIs, the service is very unstable:
+> - Wolfx API has poor optimization for domestic networks, with high latency
+> - FAN Studio API has stopped service
+>
+> Therefore, this project no longer provides available services and is retained only as a code archive.
+
 CNQuake2 is a [`PWA`](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) application built with modern Web technologies for visualizing earthquake information in China. It provides real-time earthquake early warnings, historical earthquake queries, seismic wave visualization, and more.
 
 If the content of this project infringes upon your rights, please contact us via [Issue](https://github.com/liujh5913/CNQuake2/issues/new) or email liujh5913@petalmail.com, and we will address it as soon as possible.
@@ -37,10 +46,12 @@ This application must run in an **HTTPS** environment with a properly configured
 
 ## 🎯 Planned Features
 
+> [!NOTE]
+> Since the project has stopped development, the following features will not be implemented and are retained only as historical planning records.
+
 - Support for custom local intensity trigger thresholds
 - Multi-earthquake event concurrent adaptation
 - Redraw seismic wave rendering logic, replacing the official [`MultiCircle`](https://lbs.qq.com/webApi/javascriptGL/glDoc/glDocVector#13) solution to make waveforms better fit the Earth's curved surface
-- **Community contributions for the above features are welcome**
 
 ## ⚠️ Known Issues
 
@@ -50,12 +61,12 @@ This application must run in an **HTTPS** environment with a properly configured
 
 ## 📊 Data Source Information
 
-~~Wolfx Disaster Prevention API~~
+This project previously used the following data sources, but they are no longer available due to service changes:
 
-Since 25H1, this project's warning data source has been switched to **FAN Studio - API** (`https://api.fanstudio.tech/`). This interface was selected based on measured performance in domestic network environments, offering advantages in response latency and connection stability to better ensure the timeliness of warning information.
+- ~~**Wolfx Disaster Prevention API**~~: Poor optimization for domestic networks, with high latency and unstable service.
+- ~~**FAN Studio - API** (`https://api.fanstudio.tech/`)~~: Service stopped in 26H1.
 
-> [!WARNING]
-> Any third-party data service may change. This project's data source selection always follows technical adaptation principles, with actual operational performance as the sole measure. If this interface experiences service quality fluctuations or availability changes in the future, the project will evaluate and adjust the data source configuration as appropriate to ensure continued service reliability.
+Since none of the above data sources are available anymore and there is no stable alternative API, the project can no longer provide real-time warning services and has therefore stopped development and maintenance.
 
 ## 📜 Disclaimer
 
