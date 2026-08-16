@@ -18,7 +18,7 @@
 > [!IMPORTANT]
 > ✅ **This project has switched back to the Wolfx Disaster Prevention API**
 >
-> - FAN Studio API has stopped service, switched back to Wolfx API
+> - FAN Studio API has stopped most services, switched back to Wolfx API
 > - Wolfx API typically has ~300ms latency in China (previously FAN Studio had only tens of milliseconds)
 
 CNQuake2 is a [`PWA`](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) application built with modern Web technologies for visualizing earthquake information in China. It provides real-time earthquake early warnings, historical earthquake queries, seismic wave visualization, and more.
@@ -61,7 +61,7 @@ This application must run in an **HTTPS** environment with a properly configured
 This project currently uses the following data source:
 
 - **Wolfx Disaster Prevention API** (`https://api.wolfx.jp/`): Currently in use. Typically has ~300ms latency in China.
-- ~~**FAN Studio - API** (`https://api.fanstudio.tech/`)~~: Service stopped in 26H2.
+- ~~**FAN Studio - API** (`https://api.fanstudio.tech/`)~~: Most services stopped in 26H2.
 
 ## 📜 Disclaimer
 

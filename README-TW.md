@@ -18,7 +18,7 @@
 > [!IMPORTANT]
 > ✅ **本專案已恢復使用 Wolfx 防災 API 作為資料來源**
 >
-> - FAN Studio API 已停止服務（跑路），已切換回 Wolfx API
+> - FAN Studio API 已停止大部分服務，已切換回 Wolfx API
 > - Wolfx API 在國內網路環境下延遲普遍約 300ms（此前 FAN Studio 僅幾十毫秒）
 
 CNQuake2 是一個基於現代 Web 技術構建的中國地震資訊可視化 [`PWA`](https://developer.mozilla.org/zh-CN/docs/Web/Progressive_web_apps) 應用，提供即時地震預警、歷史地震查詢、地震波可視化等功能。
@@ -61,7 +61,7 @@ CNQuake2 是一個基於現代 Web 技術構建的中國地震資訊可視化 [`
 本專案當前使用以下資料來源：
 
 - **Wolfx 防災 API**（`https://api.wolfx.jp/`）：當前使用中。在國內網路環境下延遲普遍約 300ms。
-- ~~**FAN Studio - API**（`https://api.fanstudio.tech/`）~~：已於 26H2 停止服務。
+- ~~**FAN Studio - API**（`https://api.fanstudio.tech/`）~~：已於 26H2 停止大部分服務。
 
 ## 📜 免責聲明
 
