@@ -16,13 +16,10 @@
 </div>
 
 > [!IMPORTANT]
-> ⚠️ **This project has stopped development and maintenance**
+> ✅ **This project has switched back to the Wolfx Disaster Prevention API**
 >
-> Due to frequent API changes and the lack of stable available APIs, the service is very unstable:
-> - Wolfx API has poor optimization for domestic networks, with high latency
-> - FAN Studio API has stopped service
->
-> Therefore, this project no longer provides available services and is retained only as a code archive.
+> - FAN Studio API has stopped service, switched back to Wolfx API
+> - Wolfx API typically has ~300ms latency in China (previously FAN Studio had only tens of milliseconds)
 
 CNQuake2 is a [`PWA`](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) application built with modern Web technologies for visualizing earthquake information in China. It provides real-time earthquake early warnings, historical earthquake queries, seismic wave visualization, and more.
 
@@ -47,7 +44,7 @@ This application must run in an **HTTPS** environment with a properly configured
 ## 🎯 Planned Features
 
 > [!NOTE]
-> Since the project has stopped development, the following features will not be implemented and are retained only as historical planning records.
+> The following features are still planned and not yet implemented.
 
 - Support for custom local intensity trigger thresholds
 - Multi-earthquake event concurrent adaptation
@@ -61,12 +58,10 @@ This application must run in an **HTTPS** environment with a properly configured
 
 ## 📊 Data Source Information
 
-This project previously used the following data sources, but they are no longer available due to service changes:
+This project currently uses the following data source:
 
-- ~~**Wolfx Disaster Prevention API**~~: Poor optimization for domestic networks, with high latency and unstable service.
-- ~~**FAN Studio - API** (`https://api.fanstudio.tech/`)~~: Service stopped in 26H1.
-
-Since none of the above data sources are available anymore and there is no stable alternative API, the project can no longer provide real-time warning services and has therefore stopped development and maintenance.
+- **Wolfx Disaster Prevention API** (`https://api.wolfx.jp/`): Currently in use. Typically has ~300ms latency in China.
+- ~~**FAN Studio - API** (`https://api.fanstudio.tech/`)~~: Service stopped in 26H2.
 
 ## 📜 Disclaimer
 

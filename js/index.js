@@ -1,4 +1,4 @@
-const version = "v2.0.260711";
+const version = "v2.0.260816";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -489,7 +489,7 @@ async function getAllData() {
         socket.close();
         socket = null;
     }
-    socket = new WebSocket("wss://ws.fanstudio.tech/all");
+    socket = new WebSocket("wss://ws-api.wolfx.jp/all_eew");
 
     socket.addEventListener("open", (allOpen) => {
         // 重置状态
@@ -499,16 +499,21 @@ async function getAllData() {
         console.log("[WebSocket消息] 已连接到 WebSocket.");
         toastr.success("已连接到 WebSocket.");
 
-        // setTimeout(() => {
-        //     socket.send("query");
-        // }, 2000)
-
+        // 连接成功后发送手动查询指令，获取各源最新数据
+        setTimeout(() => {
+            socket.send("query_cenceqlist");
+            socket.send("query_cenceew");
+            socket.send("query_jmaeew");
+            socket.send("query_cwaeew");
+            socket.send("query_fjeew");
+            socket.send("query_sceew");
+        }, 2000);
     });
 
     socket.addEventListener("message", (allMessage) => {
         let json = JSON.parse(allMessage.data);
 
-        console.log("[WebSocket消息] fanstudio =>", json);
+        console.log("[WebSocket消息] wolfx =>", json);
 
         if (json.type == "heartbeat") {
             // heartbeat 只用于保持连接活跃，不用于计算 RTT
@@ -558,118 +563,105 @@ async function getAllData() {
             }
         }
 
-        // 处理初始数据和查询响应
-        if (json.type == "initial_all") {
-            // 处理CENC预警数据（单个最新事件，用于预警）
-            if (json.cenc && json.cenc.Data) {
-                // 只用于预警，不更新列表
-                const cencData = json.cenc.Data;
-                if (cencData && !Array.isArray(cencData)) {
-                    // 单个预警事件
-                    eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, cencData.infoTypeName?.replace(/[\[\]]/g, "").trim(), null, cencData.depth, null);
-                    // 收到预警数据后，发送 cenclist 请求获取完整列表
-                    socket.send("cenclist");
+        // 四川省地震局 地震预警
+        if (json.type == "sc_eew") {
+            eew(json.type, json.OriginTime, json.HypoCenter, json.Latitude, json.Longitude, json.Magunitude, json.ReportNum, json.MaxIntensity);
+        }
+
+        // 福建省地震局 地震预警
+        if (json.type == "fj_eew") {
+            eew(json.type, json.OriginTime, json.HypoCenter, json.Latitude, json.Longitude, json.Magunitude, json.ReportNum, null, null, json.isFinal);
+        }
+
+        // 台湾气象署 地震预警
+        if (json.type == "cwa_eew") {
+            processCwaEewData({
+                shockTime: json.OriginTime,
+                placeName: json.HypoCenter,
+                latitude: json.Latitude,
+                longitude: json.Longitude,
+                magnitude: json.Magunitude,
+                depth: json.Depth,
+                updates: json.ReportNum
+            });
+            if (json.isCancel) {
+                toastr.info("中央气象署已取消发布的地震预警", "地震预警取消");
+                eewCancel();
+            }
+        }
+
+        // 中国地震台网 地震预警（即CEA中国地震预警网，wolfx新增）
+        if (json.type == "cenc_eew") {
+            processCeaData({
+                shockTime: json.OriginTime,
+                placeName: json.HypoCenter,
+                latitude: json.Latitude,
+                longitude: json.Longitude,
+                magnitude: json.Magnitude,
+                updates: json.ReportNum,
+                depth: json.Depth ?? 0,
+                id: json.EventID
+            });
+        }
+
+        // 日本气象厅 紧急地震速报
+        if (json.type == "jma_eew") {
+            processJmaData({
+                shockTime: json.OriginTime,
+                placeName: json.Hypocenter,
+                latitude: json.Latitude,
+                longitude: json.Longitude,
+                magnitude: json.Magunitude,
+                depth: json.Depth,
+                updates: json.Serial,
+                epiIntensity: json.MaxIntensity,
+                final: json.isFinal,
+                cancel: json.isCancel,
+                infoTypeName: json.isWarn ? "警報" : "予報"
+            });
+        }
+
+        // 日本气象厅 地震情报
+        if (json.type == "jma_eqlist") {
+            toastr.info(`
+                ${json.No1.Title}<br>
+                发震时间: ${json.No1.time}(UTC+9)<br>
+                震中: ${json.No1.location || "调查中"}（${json.No1.latitude || "?"}, ${json.No1.longitude || "?"}）<br>
+                震级: ${json.No1.magnitude || "?"}<br>
+                深度: ${json.No1.depth}<br>
+                最大震度: ${json.No1.shindo}<br>
+            `, "日本气象厅情报");
+        }
+
+        // 中国地震台网 地震信息列表
+        if (json.type == "cenc_eqlist") {
+            // 使用 md5 校验码判断列表是否有更新
+            const newMd5 = json.md5 || json.No1?.md5 || json.No1?.time;
+            if (newMd5 && newMd5 !== cencmd51) {
+                cencmd51 = newMd5;
+                const list = [];
+                for (let i = 1; i <= 50; i++) {
+                    const item = json[`No${i}`];
+                    if (!item) break;
+                    list.push({
+                        infoTypeName: item.type === "automatic" ? "[自动测定]" : "正式测定",
+                        depth: item.depth,
+                        placeName: item.location,
+                        magnitude: item.magnitude,
+                        latitude: item.latitude,
+                        longitude: item.longitude,
+                        shockTime: item.time,
+                        id: item.md5 || `${item.time}_${item.location}`,
+                        createTime: json.md5
+                    });
                 }
-            }
-            // 处理CEA数据
-            if (json.cea && json.cea.Data) {
-                processCeaData(json.cea.Data);
-            }
-            // 处理CWA-EEW数据
-            if (json["cwa-eew"] && json["cwa-eew"].Data) {
-                processCwaEewData(json["cwa-eew"].Data);
-            }
-            // 处理JMA数据
-            if (json.jma && json.jma.Data) {
-                processJmaData(json.jma.Data);
-            }
-            sendPing();
-        }
-
-        // 处理增量更新
-        if (json.type == "update") {
-            sendPing();
-            const source = json.source;
-            const data = json.Data;
-
-            switch (source) {
-                case "cenc":
-                    // CENC更新只用于预警，不更新列表
-                    if (data && !Array.isArray(data)) {
-                        eew("cenc", data.shockTime, data.placeName, data.latitude, data.longitude, data.magnitude, data.infoTypeName?.replace(/[\[\]]/g, "").trim(), null, data.depth, null);
-                        // 收到预警更新后，重新请求列表
-                        socket.send("cenclist");
-                        setTimeout(() => {
-                            socket.send("cenclist");
-                        }, 5000)
-
-                        setTimeout(() => {
-                            socket.send("cenclist");
-                        }, 10000)
-
-                        setTimeout(() => {
-                            socket.send("cenclist");
-                        }, 15000)
-
-                        setTimeout(() => {
-                            socket.send("cenclist");
-                        }, 20000)
-                    }
-                    break;
-                case "cea":
-                    processCeaData(data);
-                    break;
-                case "cwa-eew":
-                    processCwaEewData(data);
-                    break;
-                case "jma":
-                    processJmaData(data);
-                    break;
+                cencEventList = list;
+                console.log("[WebSocket消息] cenc_eqlist 数据已更新，条目数:", list.length, "md5:", newMd5);
+                displayCencList();
+            } else if (!newMd5) {
+                console.error("[WebSocket消息] cenc_eqlist 数据格式错误: 缺少md5", json);
             }
         }
-
-        // 处理CENC列表响应
-        if (json.type == "cenclist_response") {
-            console.log("[WebSocket消息] 收到 cenclist_response，数据数量:", json.Data?.length);
-            if (json.Data && Array.isArray(json.Data)) {
-                // 使用第一个事件的 createTime 作为 md5 校验
-                const newMd5 = json.Data[0]?.createTime;
-                if (newMd5 && newMd5 !== cencmd51) {
-                    cencmd51 = newMd5;
-                    cencEventList = json.Data;
-                    console.log("[WebSocket消息] cenclist_response 数据已更新到 cencEventList，md5:", newMd5);
-                    displayCencList();
-                } else {
-                    console.log("[WebSocket消息] cenclist_response md5未变化，跳过更新");
-                }
-            } else {
-                console.error("[WebSocket消息] cenclist_response 数据格式错误:", json);
-            }
-        }
-
-        // // 处理query_response（与initial_all相同结构）
-        // if (json.type == "query_response") {
-        //     // 处理CENC预警数据（单个最新事件，用于预警）
-        //     if (json.cenc && json.cenc.Data) {
-        //         const cencData = json.cenc.Data;
-        //         if (cencData && !Array.isArray(cencData)) {
-        //             // 单个预警事件
-        //             eew("cenc", cencData.shockTime, cencData.placeName, cencData.latitude, cencData.longitude, cencData.magnitude, "正式测定", null, cencData.depth, null);
-        //         }
-        //     }
-        //     // 处理CEA数据
-        //     if (json.cea && json.cea.Data) {
-        //         processCeaData(json.cea.Data);
-        //     }
-        //     // 处理CWA-EEW数据
-        //     if (json["cwa-eew"] && json["cwa-eew"].Data) {
-        //         processCwaEewData(json["cwa-eew"].Data);
-        //     }
-        //     // 处理JMA数据
-        //     if (json.jma && json.jma.Data) {
-        //         processJmaData(json.jma.Data);
-        //     }
-        // }
     });
 
     socket.addEventListener("error", (allError) => {
