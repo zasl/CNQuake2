@@ -1,4 +1,4 @@
-const version = "v2.0.260816";
+const version = "v2.0.260829 SP4";
 
 // 时间同步相关变量
 let nowCNtimeStamp = {
@@ -473,6 +473,50 @@ class HEQC {
 }
 let socket;
 
+// 串行查询队列：查询命令 -> 期待收到的响应 type
+const 查询队列 = [
+    { 命令: "query_cenceqlist", 响应类型: "cenc_eqlist" },
+    { 命令: "query_cenceew", 响应类型: "cenc_eew" },
+    { 命令: "query_jmaeew", 响应类型: "jma_eew" },
+    { 命令: "query_cwaeew", 响应类型: "cwa_eew" },
+    { 命令: "query_fjeew", 响应类型: "fj_eew" },
+    { 命令: "query_sceew", 响应类型: "sc_eew" },
+];
+const 查询发送间隔 = 1000;  // 每次发送查询之间的缓冲（ms）
+const 查询响应超时 = 5000;  // 单个查询的最大等待时间（ms）
+let 查询索引 = 0;
+let 查询超时定时器 = null;
+
+// 跳到下一个查询并在间隔后发送（统一调用点，消除重复 setTimeout）
+function 触发下一个查询() {
+    查询索引++;
+    setTimeout(发送下一个查询, 查询发送间隔);
+}
+
+// 发送下一个查询（收到上一个响应或超时后调用）
+function 发送下一个查询() {
+    if (查询超时定时器) {
+        clearTimeout(查询超时定时器);
+        查询超时定时器 = null;
+    }
+    if (查询索引 >= 查询队列.length) {
+        console.log("[串行查询] 所有初始查询已完成");
+        return;
+    }
+    const 当前 = 查询队列[查询索引];
+    console.log(`[串行查询] 发送 ${查询索引 + 1}/${查询队列.length}: ${当前.命令}`);
+    try {
+        socket.send(当前.命令);
+    } catch (err) {
+        console.error(`[串行查询] 发送失败: ${当前.命令}`, err);
+    }
+    // 单个查询最多等若干秒，超时就继续下一个，避免某个查询没响应就卡住
+    查询超时定时器 = setTimeout(() => {
+        console.warn(`[串行查询] 超时: ${当前.命令}（${当前.响应类型}），${查询发送间隔}ms后发下一个`);
+        触发下一个查询();
+    }, 查询响应超时);
+}
+
 // 发送 ping 并记录时间，用于计算 RTT
 function sendPing() {
     if (isPageVisible) {
@@ -499,14 +543,10 @@ async function getAllData() {
         console.log("[WebSocket消息] 已连接到 WebSocket.");
         toastr.success("已连接到 WebSocket.");
 
-        // 连接成功后发送手动查询指令，获取各源最新数据
+        // 连接成功后串行发送查询指令：发一个，等回复，再发下一个
+        查询索引 = 0;
         setTimeout(() => {
-            socket.send("query_cenceqlist");
-            socket.send("query_cenceew");
-            socket.send("query_jmaeew");
-            socket.send("query_cwaeew");
-            socket.send("query_fjeew");
-            socket.send("query_sceew");
+            发送下一个查询();
         }, 2000);
     });
 
@@ -514,6 +554,12 @@ async function getAllData() {
         let json = JSON.parse(allMessage.data);
 
         console.log("[WebSocket消息] wolfx =>", json);
+
+        // 串行查询：收到当前期待的响应类型后，调度下一个查询
+        if (查询索引 < 查询队列.length && json.type === 查询队列[查询索引].响应类型) {
+            console.log(`[串行查询] 收到响应: ${查询队列[查询索引].响应类型}，${查询发送间隔}ms后发下一个`);
+            触发下一个查询();
+        }
 
         if (json.type == "heartbeat") {
             // heartbeat 只用于保持连接活跃，不用于计算 RTT
@@ -1516,61 +1562,48 @@ function binarySearch(arr, target) {
 }
 
 const MAX_DIFF = 50000;
-const STEPS = 60;
+const 动画总时长 = 1000; // 毫秒，固定1秒走完过渡，不受屏幕帧率影响
 
 function setSmoothRadius(psWaveCircle, pWaveRadius, sWaveRadius, centers, sWaveStyle) {
     if (!psWaveCircle) {
-        console.log(`[平滑震波] ${psWave} 不在了 =>`, circle);
+        console.log(`[平滑震波] psWaveCircle 不存在`);
         return;
     }
 
     const geometries = psWaveCircle.getGeometries();
-    let pWaveNowRadius = geometries[0].radius,
-        sWaveNowRadius = geometries[1].radius;
+    const pWave起始半径 = geometries[0].radius;
+    const sWave起始半径 = geometries[1].radius;
 
-    const diffp = pWaveRadius - pWaveNowRadius;
-    const diffs = sWaveRadius - sWaveNowRadius;
+    const pWave增量 = pWaveRadius - pWave起始半径;
+    const sWave增量 = sWaveRadius - sWave起始半径;
 
     // 如果差值太大，直接设置目标半径而不进行平滑过渡
-    if (Math.abs(diffp) > MAX_DIFF || Math.abs(diffs) > MAX_DIFF) {
-        psWaveCircle.setGeometries([{
-            styleId: "pWave",
-            center: centers,
-            radius: pWaveRadius
-        },
-        {
-            styleId: sWaveStyle,
-            center: centers,
-            radius: sWaveRadius
-        }
+    if (Math.abs(pWave增量) > MAX_DIFF || Math.abs(sWave增量) > MAX_DIFF) {
+        psWaveCircle.setGeometries([
+            { styleId: "pWave", center: centers, radius: pWaveRadius },
+            { styleId: sWaveStyle, center: centers, radius: sWaveRadius }
         ]);
         return;
     }
 
-    // 计算步长
-    const stepp = diffp / STEPS;
-    const steps = diffs / STEPS;
+    const 起始时间 = performance.now();
 
     const updateRadius = () => {
-        pWaveNowRadius += stepp;
-        sWaveNowRadius += steps;
+        const 经过毫秒 = performance.now() - 起始时间;
+        let t = 经过毫秒 / 动画总时长; // 0 ~ 1
+        if (t > 1) t = 1;
+
+        const 当前P波半径 = pWave起始半径 + pWave增量 * t;
+        const 当前S波半径 = sWave起始半径 + sWave增量 * t;
 
         if (psWaveCircle) {
-            psWaveCircle.setGeometries([{
-                styleId: "pWave",
-                center: centers,
-                radius: pWaveNowRadius
-            },
-            {
-                styleId: sWaveStyle,
-                center: centers,
-                radius: sWaveNowRadius
-            }
+            psWaveCircle.setGeometries([
+                { styleId: "pWave", center: centers, radius: 当前P波半径 },
+                { styleId: sWaveStyle, center: centers, radius: 当前S波半径 }
             ]);
         }
 
-        // 继续更新半径，直到达到目标半径
-        if (Math.abs(pWaveNowRadius - pWaveRadius) > Math.abs(stepp) || Math.abs(sWaveNowRadius - sWaveRadius) > Math.abs(steps)) {
+        if (t < 1) {
             requestAnimationFrame(updateRadius);
         }
     };
